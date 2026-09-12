@@ -1,95 +1,305 @@
-@extends('templates.admin')
+@extends('layouts.app')
+
+@section('title', 'Detail Jadwal')
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="card-title text-primary mb-0">
-                        <i class="mdi mdi-information-variant mr-2"></i>Detail Jadwal: {{ date('F', mktime(0, 0, 0, $jadwal->bulan, 1)) }} {{ $jadwal->tahun }}
-                    </h4>
-                    <span class="badge {{ $jadwal->status == 'disetujui' ? 'badge-success' : ($jadwal->status == 'ditolak' ? 'badge-danger' : 'badge-warning') }} px-3 py-2">
-                        {{ strtoupper($jadwal->status) }}
-                    </span>
+
+<div class="container-fluid px-0">
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+
+        <div>
+
+            <a
+                href="{{ route('jadwal.index') }}"
+                class="text-decoration-none text-muted"
+            >
+                <i class="fa-solid fa-arrow-left me-1"></i>
+                Kembali
+            </a>
+
+            <h4 class="fw-bold mt-3 mb-1">
+                Detail Jadwal Bulanan
+            </h4>
+
+            <p class="text-muted mb-0">
+                {{ \Carbon\Carbon::create()
+                    ->month($jadwal->bulan)
+                    ->translatedFormat('F') }}
+                {{ $jadwal->tahun }}
+            </p>
+
+        </div>
+
+        <div class="d-flex gap-2">
+
+            @if($jadwal->status !== 'final')
+
+                <a
+                    href="{{ route('jadwal.edit', $jadwal) }}"
+                    class="btn btn-outline-primary"
+                >
+                    <i class="fa-solid fa-pen me-1"></i>
+                    Edit
+                </a>
+
+            @endif
+
+            <a
+                href="{{ route('jadwal.pdf', $jadwal) }}"
+                target="_blank"
+                class="btn btn-outline-danger"
+            >
+                <i class="fa-solid fa-file-pdf me-1"></i>
+                PDF
+            </a>
+
+            <a
+                href="{{ route('jadwal.excel', $jadwal) }}"
+                class="btn btn-outline-success"
+            >
+                <i class="fa-solid fa-file-excel me-1"></i>
+                Excel
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-4">
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Periode
+                    </small>
+
+                    <div class="fw-semibold mt-1">
+                        {{ \Carbon\Carbon::create()
+                            ->month($jadwal->bulan)
+                            ->translatedFormat('F') }}
+                        {{ $jadwal->tahun }}
+                    </div>
+
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-bordered mb-4">
-                        <thead class="bg-primary text-white">
-                            <tr>
-                                <th>AKD</th>
-                                <th>Tujuan</th>
-                                <th>Waktu Kunjungan</th>
-                                <th>Kegiatan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($jadwal->details as $d)
-                            <tr>
-                                <td class="font-weight-bold">{{ $d->akd->nama_akd }}</td>
-                                <td>{{ $d->tujuan }}</td>
-                                <td>
-                                    <i class="mdi mdi-calendar-range text-muted mr-1"></i>
-                                    {{ \Carbon\Carbon::parse($d->tgl_mulai)->format('d M Y') }} s/d {{ \Carbon\Carbon::parse($d->tgl_selesai)->format('d M Y') }}
-                                </td>
-                                <td>{{ $d->kegiatan ?? $d->kegiatanDetail->name }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Status
+                    </small>
+
+                    <div class="mt-1">
+
+                        @if($jadwal->status === 'draft')
+                            <span class="badge text-bg-secondary">
+                                Draft
+                            </span>
+                        @elseif($jadwal->status === 'diajukan')
+                            <span class="badge text-bg-warning">
+                                Diajukan
+                            </span>
+                        @elseif($jadwal->status === 'disetujui')
+                            <span class="badge text-bg-success">
+                                Disetujui
+                            </span>
+                        @elseif($jadwal->status === 'ditolak')
+                            <span class="badge text-bg-danger">
+                                Ditolak
+                            </span>
+                        @else
+                            <span class="badge bg-jade">
+                                Final
+                            </span>
+                        @endif
+
+                    </div>
+
                 </div>
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Dibuat Oleh
+                    </small>
+
+                    <div class="fw-semibold mt-1">
+                        {{ $jadwal->dibuatOleh->name ?? '-' }}
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Jumlah Kegiatan
+                    </small>
+
+                    <div class="fw-semibold mt-1">
+                        {{ $jadwal->details->count() }}
+                    </div>
+
+                </div>
+
+            </div>
+
+            @if($jadwal->catatan)
 
                 <hr>
 
-                {{-- Panel Persetujuan Banmus (KF-05 & KNF-02) --}}
-                @if(auth()->user()->role == 'bamus' && $jadwal->status == 'draft')
-                <div class="card bg-light border-info mt-4">
-                    <div class="card-body">
-                        <h5 class="text-info font-weight-bold mb-3">
-                            <i class="mdi mdi-checkbox-marked-circle-outline mr-2"></i>Panel Persetujuan Banmus
-                        </h5>
-                        <form action="{{ route('petugas.jadwal.approve', $jadwal->id) }}" method="POST">
-                            @csrf
-                            <div class="form-group">
-                                <label class="font-weight-bold">Catatan / Alasan (Opsional)</label>
-                                <textarea name="catatan" class="form-control" rows="3" placeholder="Masukkan catatan jika ada..."></textarea>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button type="submit" name="status" value="disetujui" class="btn btn-success btn-icon-text">
-                                    <i class="mdi mdi-check btn-icon-prepend"></i> Setujui Jadwal
-                                </button>
-                                <button type="submit" name="status" value="ditolak" class="btn btn-danger btn-icon-text">
-                                    <i class="mdi mdi-close btn-icon-prepend"></i> Tolak Jadwal
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                @endif
+                <small class="text-muted">
+                    Catatan
+                </small>
 
-                {{-- Status Final & Riwayat Persetujuan (KF-06 & KNF-03) --}}
-                @if($jadwal->status != 'draft')
-                <div class="alert {{ $jadwal->status == 'disetujui' ? 'alert-success' : 'alert-danger' }} mt-4">
-                    <h6 class="font-weight-bold">Riwayat Persetujuan:</h6>
-                    <p class="mb-1"><strong>Status Akhir:</strong> {{ strtoupper($jadwal->status) }}</p>
-                    <p class="mb-1"><strong>Catatan:</strong> {{ $jadwal->catatan_banmus ?? 'Tidak ada catatan' }}</p>
-                    @if($jadwal->approved_at)
-                        <small class="text-muted">Diproses pada: {{ \Carbon\Carbon::parse($jadwal->approved_at)->format('d F Y H:i') }}</small>
-                    @endif
+                <div class="mt-1">
+                    {{ $jadwal->catatan }}
                 </div>
-                @endif
 
-                <div class="mt-4">
-                    @php
-                        $backRoute = auth()->user()->role == 'admin' ? route('admin.jadwal.index') : route('petugas.jadwal.index');
-                    @endphp
-                    <a href="{{ $backRoute }}" class="btn btn-light border">
-                        <i class="mdi mdi-arrow-left mr-1"></i> Kembali ke Daftar
-                    </a>
-                </div>
-            </div>
+            @endif
+
         </div>
+
     </div>
+
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white border-0 pt-4 px-4">
+
+            <h6 class="fw-bold mb-1">
+                Daftar Kegiatan
+            </h6>
+
+            <p class="text-muted small mb-0">
+                Detail kegiatan pada periode jadwal.
+            </p>
+
+        </div>
+
+        <div class="card-body px-4">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+
+                        <tr>
+                            <th>No</th>
+                            <th>Tanggal</th>
+                            <th>Posyandu</th>
+                            <th>Wilayah</th>
+                            <th>Kegiatan</th>
+                            <th>Waktu</th>
+                            <th>Tipe</th>
+                            <th>Status</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @forelse($jadwal->details as $index => $detail)
+
+                            <tr>
+
+                                <td>
+                                    {{ $index + 1 }}
+                                </td>
+
+                                <td>
+                                    {{ \Carbon\Carbon::parse($detail->tgl_mulai)
+                                        ->translatedFormat('d F Y') }}
+                                </td>
+
+                                <td>
+                                    {{ $detail->posyandu->nama_posyandu ?? '-' }}
+                                </td>
+
+                                <td>
+                                    {{ $detail->posyandu->wilayah->nama_wilayah ?? '-' }}
+                                </td>
+
+                                <td>
+                                    {{ $detail->kegiatan->nama_kegiatan ?? '-' }}
+                                </td>
+
+                                <td>
+                                    @if($detail->jam_mulai && $detail->jam_selesai)
+                                        {{ substr($detail->jam_mulai, 0, 5) }}
+                                        -
+                                        {{ substr($detail->jam_selesai, 0, 5) }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        {{ $detail->tipe_kegiatan }}
+                                    </span>
+                                </td>
+
+                                <td>
+
+                                    @if($detail->status === 'terjadwal')
+
+                                        <span class="badge text-bg-primary">
+                                            Terjadwal
+                                        </span>
+
+                                    @elseif($detail->status === 'selesai')
+
+                                        <span class="badge text-bg-success">
+                                            Selesai
+                                        </span>
+
+                                    @else
+
+                                        <span class="badge text-bg-danger">
+                                            Dibatalkan
+                                        </span>
+
+                                    @endif
+
+                                </td>
+
+                            </tr>
+
+                        @empty
+
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    Belum ada detail kegiatan.
+                                </td>
+                            </tr>
+
+                        @endforelse
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
+
 @endsection
+
+@push('styles')
+<style>
+    .bg-jade {
+        background: var(--jade) !important;
+        color: #fff;
+    }
+</style>
+@endpush

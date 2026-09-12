@@ -11,39 +11,44 @@ class JadwalBulanan extends Model
 {
     use HasFactory;
 
-    protected $table = 'jadwal_bulanans';
-
     protected $fillable = [
         'bulan',
         'tahun',
-        'status', // draft, disetujui, ditolak
-        'catatan_banmus',
+        'status',
+        'catatan',
         'dibuat_oleh',
         'approved_by',
         'approved_at',
     ];
 
-    /**
-     * Aturan Bisnis: Satu jadwal dapat memiliki banyak detail jadwal
-     */
+    protected $casts = [
+        'bulan' => 'integer',
+        'tahun' => 'integer',
+        'approved_at' => 'datetime',
+    ];
+
+    public function dibuatOleh(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dibuat_oleh');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     public function details(): HasMany
     {
         return $this->hasMany(JadwalDetail::class, 'jadwal_id');
     }
 
-    /**
-     * Relasi ke Admin yang menyusun jadwal
-     */
-    public function user(): BelongsTo
+    public function approvals(): HasMany
     {
-        return $this->belongsTo(User::class, 'dibuat_oleh');
+        return $this->hasMany(JadwalApproval::class, 'jadwal_id');
     }
 
-    /**
-     * Relasi ke Banmus yang memberikan persetujuan
-     */
-    public function approver(): BelongsTo
+    public function statusLogs(): HasMany
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->hasMany(JadwalStatusLog::class, 'jadwal_id');
     }
 }

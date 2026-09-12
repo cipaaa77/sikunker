@@ -4,80 +4,146 @@ namespace App\Http\Controllers;
 
 use App\Models\Kegiatan;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class KegiatanController extends Controller
 {
-    /**
-     * Menampilkan daftar Kegiatan.
-     */
     public function index()
     {
-        $kegiatans = Kegiatan::all();
-        return view('pages.kegiatan.index', compact('kegiatans'));
+        $kegiatans = Kegiatan::latest()
+            ->paginate(10);
+
+        return view(
+            'pages.kegiatan.index',
+            compact('kegiatans')
+        );
     }
 
-    /**
-     * Menampilkan form tambah Kegiatan.
-     */
     public function create()
     {
         return view('pages.kegiatan.create');
     }
 
-    /**
-     * Menyimpan data Kegiatan baru ke database.
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $validated = $request->validate([
+            'kode_kegiatan' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:kegiatans,kode_kegiatan',
+            ],
+            'nama_kegiatan' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'deskripsi' => [
+                'nullable',
+                'string',
+            ],
+            'aktif' => [
+                'nullable',
+                'boolean',
+            ],
+        ], [
+            'kode_kegiatan.required' => 'Kode kegiatan wajib diisi.',
+            'kode_kegiatan.unique' => 'Kode kegiatan sudah digunakan.',
+            'nama_kegiatan.required' => 'Nama kegiatan wajib diisi.',
         ]);
 
-        Kegiatan::create($request->only('name'));
+        $validated['aktif'] = $request->boolean('aktif');
 
-        return redirect()->route('admin.kegiatan.index')
-            ->with('success', 'Data Kegiatan berhasil ditambahkan.');
+        Kegiatan::create($validated);
+
+        return redirect()
+            ->route('kegiatan.index')
+            ->with(
+                'success',
+                'Kegiatan berhasil ditambahkan.'
+            );
     }
 
-    /**
-     * Menampilkan form edit Kegiatan.
-     */
-    public function edit(string $id)
+    public function show(Kegiatan $kegiatan)
     {
-        $kegiatan = Kegiatan::findOrFail($id);
-        return view('pages.kegiatan.edit', compact('kegiatan'));
-    }
-
-    /**
-     * Memperbarui data Kegiatan.
-     */
-    public function update(Request $request, string $id)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $kegiatan->load([
+            'jadwalDetails.posyandu',
+            'jadwalDetails.jadwal',
         ]);
 
-        $kegiatan = Kegiatan::findOrFail($id);
-        $kegiatan->update($request->only('name'));
-
-        return redirect()->route('admin.kegiatan.index')
-            ->with('success', 'Data Kegiatan berhasil diperbarui.');
+        return view(
+            'pages.kegiatan.show',
+            compact('kegiatan')
+        );
     }
 
-    /**
-     * Menghapus data Kegiatan.
-     */
-    public function destroy(string $id)
+    public function edit(Kegiatan $kegiatan)
     {
-        try {
-            $kegiatan = Kegiatan::findOrFail($id);
-            $kegiatan->delete();
+        return view(
+            'pages.kegiatan.edit',
+            compact('kegiatan')
+        );
+    }
 
-            return redirect()->route('admin.kegiatan.index')
-                ->with('success', 'Data Kegiatan berhasil dihapus.');
-        } catch (\Exception $e) {
-            return redirect()->route('admin.kegiatan.index')
-                ->with('error', 'Gagal menghapus data. Kegiatan mungkin masih terhubung dengan data lain.');
+    public function update(Request $request, Kegiatan $kegiatan)
+    {
+        $validated = $request->validate([
+            'kode_kegiatan' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('kegiatans', 'kode_kegiatan')
+                    ->ignore($kegiatan->id),
+            ],
+            'nama_kegiatan' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'deskripsi' => [
+                'nullable',
+                'string',
+            ],
+            'aktif' => [
+                'nullable',
+                'boolean',
+            ],
+        ], [
+            'kode_kegiatan.required' => 'Kode kegiatan wajib diisi.',
+            'kode_kegiatan.unique' => 'Kode kegiatan sudah digunakan.',
+            'nama_kegiatan.required' => 'Nama kegiatan wajib diisi.',
+        ]);
+
+        $validated['aktif'] = $request->boolean('aktif');
+
+        $kegiatan->update($validated);
+
+        return redirect()
+            ->route('kegiatan.index')
+            ->with(
+                'success',
+                'Kegiatan berhasil diperbarui.'
+            );
+    }
+
+    public function destroy(Kegiatan $kegiatan)
+    {
+        if ($kegiatan->jadwalDetails()->exists()) {
+            return redirect()
+                ->route('kegiatan.index')
+                ->with(
+                    'error',
+                    'Kegiatan tidak dapat dihapus karena sudah digunakan dalam jadwal.'
+                );
         }
+
+        $kegiatan->delete();
+
+        return redirect()
+            ->route('kegiatan.index')
+            ->with(
+                'success',
+                'Kegiatan berhasil dihapus.'
+            );
     }
 }

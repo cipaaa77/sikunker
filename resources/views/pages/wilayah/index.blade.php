@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Kegiatan')
+@section('title', 'Wilayah')
+@section('breadcrumb', 'Wilayah')
+@section('page-title', 'Data Wilayah')
+
 
 @push('styles')
 
@@ -96,11 +99,15 @@
     .action-btn {
         width: 31px;
         height: 31px;
+
         display: inline-flex;
         align-items: center;
         justify-content: center;
+
         border-radius: 7px;
+
         margin-left: 3px;
+
         font-size: 12px;
     }
 
@@ -112,13 +119,18 @@
     .empty-state-icon {
         width: 55px;
         height: 55px;
+
         margin: 0 auto 15px;
+
         display: flex;
         align-items: center;
         justify-content: center;
+
         border-radius: 50%;
+
         background: #e8f2f0;
         color: #174a43;
+
         font-size: 20px;
     }
 
@@ -143,7 +155,7 @@
         }
 
         .table {
-            min-width: 700px;
+            min-width: 850px;
         }
 
     }
@@ -152,36 +164,45 @@
 
 @endpush
 
+
 @section('content')
 
+
 <div class="card page-card">
+
+
+    {{-- HEADER --}}
 
     <div class="page-card-header">
 
         <div class="row align-items-center">
 
+
             <div class="col-md-7">
 
                 <div class="page-title-small">
-                    Data Kegiatan
+                    Data Wilayah
                 </div>
 
                 <p class="page-description">
-                    Kelola jenis kegiatan yang digunakan dalam penjadwalan Posyandu.
+                    Kelola data wilayah yang digunakan dalam sistem Posyandu.
                 </p>
 
             </div>
+
 
             <div class="col-md-5">
 
                 <div class="d-flex justify-content-md-end header-action">
 
                     <a
-                        href="{{ route('kegiatan.create') }}"
-                        class="btn btn-jade btn-sm"
-                    >
+                        href="{{ route('wilayah.create') }}"
+                        class="btn btn-jade btn-sm">
+
                         <i class="fas fa-plus me-1"></i>
-                        Tambah Kegiatan
+
+                        Tambah Wilayah
+
                     </a>
 
                 </div>
@@ -192,7 +213,11 @@
 
     </div>
 
+
     <div class="border-top"></div>
+
+
+    {{-- FILTER --}}
 
     <div class="p-3">
 
@@ -206,21 +231,21 @@
 
                     <input
                         type="text"
-                        id="searchKegiatan"
+                        id="searchWilayah"
                         class="form-control form-control-sm"
-                        placeholder="Cari kode, nama kegiatan..."
-                    >
+                        placeholder="Cari wilayah, RW, kelurahan...">
 
                 </div>
 
             </div>
+
 
             <div class="col-md-4 text-md-end mt-2 mt-md-0">
 
                 <small class="text-muted">
 
                     Menampilkan
-                    <strong>{{ $kegiatans->total() }}</strong>
+                    <strong>{{ $wilayahs->total() }}</strong>
                     data
 
                 </small>
@@ -231,12 +256,14 @@
 
     </div>
 
+
+    {{-- TABLE --}}
+
     <div class="table-responsive">
 
         <table
             class="table table-hover align-items-center mb-0"
-            id="kegiatanTable"
-        >
+            id="wilayahTable">
 
             <thead>
 
@@ -247,15 +274,23 @@
                     </th>
 
                     <th>
-                        Kode Kegiatan
+                        Nama Wilayah
                     </th>
 
                     <th>
-                        Nama Kegiatan
+                        RW
                     </th>
 
                     <th>
-                        Deskripsi
+                        Kelurahan
+                    </th>
+
+                    <th>
+                        Kecamatan
+                    </th>
+
+                    <th>
+                        Alamat
                     </th>
 
                     <th>
@@ -270,46 +305,85 @@
 
             </thead>
 
+
             <tbody>
 
-                @forelse($kegiatans as $index => $kegiatan)
+                @forelse($wilayahs as $index => $wilayah)
 
                     <tr>
 
+
+                        {{-- NO --}}
+
                         <td class="ps-4">
-                            {{ $kegiatans->firstItem() + $index }}
+
+                            {{ $wilayahs->firstItem() + $index }}
+
                         </td>
+
+
+                        {{-- NAMA --}}
 
                         <td>
 
                             <div class="fw-semibold text-dark">
-                                {{ $kegiatan->kode_kegiatan }}
+
+                                {{ $wilayah->nama_wilayah }}
+
                             </div>
 
                         </td>
 
+
+                        {{-- RW --}}
+
                         <td>
 
-                            <div class="fw-semibold text-dark">
-                                {{ $kegiatan->nama_kegiatan }}
-                            </div>
+                            {{ $wilayah->rw ?: '-' }}
 
                         </td>
 
+
+                        {{-- KELURAHAN --}}
+
                         <td>
 
-                            <div
+                            {{ $wilayah->kelurahan ?: '-' }}
+
+                        </td>
+
+
+                        {{-- KECAMATAN --}}
+
+                        <td>
+
+                            {{ $wilayah->kecamatan ?: '-' }}
+
+                        </td>
+
+
+                        {{-- ALAMAT --}}
+
+                        <td>
+
+                            <span
                                 class="text-muted"
-                                style="max-width: 360px; overflow: hidden; text-overflow: ellipsis;"
-                            >
-                                {{ $kegiatan->deskripsi ?: '-' }}
-                            </div>
+                                title="{{ $wilayah->alamat }}">
+
+                                {{ $wilayah->alamat
+                                    ? Str::limit($wilayah->alamat, 35)
+                                    : '-' }}
+
+                            </span>
 
                         </td>
 
+
+                        {{-- STATUS --}}
+
                         <td>
 
-                            @if($kegiatan->aktif)
+                            @if($wilayah->aktif)
 
                                 <span class="badge badge-active">
                                     Aktif
@@ -325,42 +399,57 @@
 
                         </td>
 
+
+                        {{-- ACTION --}}
+
                         <td class="text-center">
 
-                            <a
-                                href="{{ route('kegiatan.show', $kegiatan) }}"
-                                class="btn btn-outline-secondary action-btn"
-                                title="Lihat"
-                            >
-                                <i class="fas fa-eye"></i>
-                            </a>
+
+                            {{-- SHOW --}}
 
                             <a
-                                href="{{ route('kegiatan.edit', $kegiatan) }}"
-                                class="btn btn-outline-jade action-btn"
-                                title="Edit"
-                            >
-                                <i class="fas fa-pen"></i>
+                                href="{{ route('wilayah.show', $wilayah) }}"
+                                class="btn btn-outline-secondary action-btn"
+                                title="Lihat">
+
+                                <i class="fas fa-eye"></i>
+
                             </a>
+
+
+                            {{-- EDIT --}}
+
+                            <a
+                                href="{{ route('wilayah.edit', $wilayah) }}"
+                                class="btn btn-outline-jade action-btn"
+                                title="Edit">
+
+                                <i class="fas fa-pen"></i>
+
+                            </a>
+
+
+                            {{-- DELETE --}}
 
                             <form
-                                action="{{ route('kegiatan.destroy', $kegiatan) }}"
+                                action="{{ route('wilayah.destroy', $wilayah) }}"
                                 method="POST"
-                                class="d-inline delete-form"
-                                data-name="{{ $kegiatan->nama_kegiatan }}"
-                            >
+                                class="d-inline delete-form">
+
                                 @csrf
                                 @method('DELETE')
 
                                 <button
                                     type="submit"
                                     class="btn btn-outline-danger action-btn"
-                                    title="Hapus"
-                                >
+                                    title="Hapus">
+
                                     <i class="fas fa-trash"></i>
+
                                 </button>
 
                             </form>
+
 
                         </td>
 
@@ -370,30 +459,32 @@
 
                     <tr>
 
-                        <td colspan="6">
+                        <td colspan="8">
 
                             <div class="empty-state">
 
                                 <div class="empty-state-icon">
 
-                                    <i class="fas fa-list-check"></i>
+                                    <i class="fas fa-map-location-dot"></i>
 
                                 </div>
 
                                 <h6 class="fw-semibold">
-                                    Belum Ada Data Kegiatan
+                                    Belum Ada Data Wilayah
                                 </h6>
 
                                 <p class="text-muted small mb-3">
-                                    Silakan tambahkan jenis kegiatan terlebih dahulu.
+                                    Silakan tambahkan wilayah terlebih dahulu.
                                 </p>
 
                                 <a
-                                    href="{{ route('kegiatan.create') }}"
-                                    class="btn btn-jade btn-sm"
-                                >
+                                    href="{{ route('wilayah.create') }}"
+                                    class="btn btn-jade btn-sm">
+
                                     <i class="fas fa-plus me-1"></i>
-                                    Tambah Kegiatan
+
+                                    Tambah Wilayah
+
                                 </a>
 
                             </div>
@@ -410,19 +501,25 @@
 
     </div>
 
-    @if($kegiatans->hasPages())
+
+    {{-- PAGINATION --}}
+
+    @if($wilayahs->hasPages())
 
         <div class="px-3 py-3 border-top">
 
-            {{ $kegiatans->links() }}
+            {{ $wilayahs->links() }}
 
         </div>
 
     @endif
 
+
 </div>
 
+
 @endsection
+
 
 @push('scripts')
 
@@ -432,15 +529,22 @@ document.addEventListener(
     'DOMContentLoaded',
     function () {
 
+
+        /* =================================================
+           SEARCH
+        ================================================= */
+
         const search =
             document.getElementById(
-                'searchKegiatan'
+                'searchWilayah'
             );
+
 
         const table =
             document.getElementById(
-                'kegiatanTable'
+                'wilayahTable'
             );
+
 
         if (search && table) {
 
@@ -455,6 +559,7 @@ document.addEventListener(
                         table.querySelectorAll(
                             'tbody tr'
                         );
+
 
                     rows.forEach(function (row) {
 
@@ -473,6 +578,71 @@ document.addEventListener(
             );
 
         }
+
+
+        /* =================================================
+           DELETE CONFIRMATION
+        ================================================= */
+
+        const forms =
+            document.querySelectorAll(
+                '.delete-form'
+            );
+
+
+        forms.forEach(function (form) {
+
+            form.addEventListener(
+                'submit',
+                function (event) {
+
+                    event.preventDefault();
+
+
+                    Swal.fire({
+
+                        title:
+                            'Hapus Wilayah?',
+
+                        text:
+                            'Data wilayah yang dihapus tidak dapat dikembalikan.',
+
+                        icon:
+                            'warning',
+
+                        showCancelButton:
+                            true,
+
+                        confirmButtonColor:
+                            '#174a43',
+
+                        cancelButtonColor:
+                            '#6c757d',
+
+                        confirmButtonText:
+                            'Ya, Hapus',
+
+                        cancelButtonText:
+                            'Batal',
+
+                        reverseButtons:
+                            true
+
+                    }).then(function (result) {
+
+                        if (result.isConfirmed) {
+
+                            form.submit();
+
+                        }
+
+                    });
+
+                }
+            );
+
+        });
+
 
     }
 );

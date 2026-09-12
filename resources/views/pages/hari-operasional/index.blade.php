@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Kegiatan')
+@section('title', 'Hari Operasional')
 
 @push('styles')
 
@@ -143,7 +143,7 @@
         }
 
         .table {
-            min-width: 700px;
+            min-width: 850px;
         }
 
     }
@@ -163,11 +163,11 @@
             <div class="col-md-7">
 
                 <div class="page-title-small">
-                    Data Kegiatan
+                    Data Hari Operasional
                 </div>
 
                 <p class="page-description">
-                    Kelola jenis kegiatan yang digunakan dalam penjadwalan Posyandu.
+                    Kelola hari dan jam operasional setiap Posyandu.
                 </p>
 
             </div>
@@ -177,11 +177,11 @@
                 <div class="d-flex justify-content-md-end header-action">
 
                     <a
-                        href="{{ route('kegiatan.create') }}"
+                        href="{{ route('hari-operasional.create') }}"
                         class="btn btn-jade btn-sm"
                     >
                         <i class="fas fa-plus me-1"></i>
-                        Tambah Kegiatan
+                        Tambah Hari Operasional
                     </a>
 
                 </div>
@@ -206,9 +206,9 @@
 
                     <input
                         type="text"
-                        id="searchKegiatan"
+                        id="searchHariOperasional"
                         class="form-control form-control-sm"
-                        placeholder="Cari kode, nama kegiatan..."
+                        placeholder="Cari Posyandu, hari..."
                     >
 
                 </div>
@@ -220,7 +220,7 @@
                 <small class="text-muted">
 
                     Menampilkan
-                    <strong>{{ $kegiatans->total() }}</strong>
+                    <strong>{{ $hariOperasionals->total() }}</strong>
                     data
 
                 </small>
@@ -235,7 +235,7 @@
 
         <table
             class="table table-hover align-items-center mb-0"
-            id="kegiatanTable"
+            id="hariOperasionalTable"
         >
 
             <thead>
@@ -247,15 +247,15 @@
                     </th>
 
                     <th>
-                        Kode Kegiatan
+                        Posyandu
                     </th>
 
                     <th>
-                        Nama Kegiatan
+                        Hari
                     </th>
 
                     <th>
-                        Deskripsi
+                        Jam Operasional
                     </th>
 
                     <th>
@@ -272,44 +272,51 @@
 
             <tbody>
 
-                @forelse($kegiatans as $index => $kegiatan)
+                @forelse($hariOperasionals as $index => $hariOperasional)
 
                     <tr>
 
                         <td class="ps-4">
-                            {{ $kegiatans->firstItem() + $index }}
+                            {{ $hariOperasionals->firstItem() + $index }}
                         </td>
 
                         <td>
 
                             <div class="fw-semibold text-dark">
-                                {{ $kegiatan->kode_kegiatan }}
+                                {{ $hariOperasional->posyandu->nama_posyandu }}
                             </div>
+
+                            <small class="text-muted">
+                                {{ $hariOperasional->posyandu->kode_posyandu }}
+                            </small>
 
                         </td>
 
                         <td>
 
                             <div class="fw-semibold text-dark">
-                                {{ $kegiatan->nama_kegiatan }}
+                                {{ $hariOperasional->nama_hari }}
                             </div>
 
                         </td>
 
                         <td>
 
-                            <div
-                                class="text-muted"
-                                style="max-width: 360px; overflow: hidden; text-overflow: ellipsis;"
-                            >
-                                {{ $kegiatan->deskripsi ?: '-' }}
-                            </div>
+                            <span class="text-dark">
+
+                                {{ \Carbon\Carbon::parse($hariOperasional->jam_mulai)->format('H:i') }}
+
+                                -
+
+                                {{ \Carbon\Carbon::parse($hariOperasional->jam_selesai)->format('H:i') }}
+
+                            </span>
 
                         </td>
 
                         <td>
 
-                            @if($kegiatan->aktif)
+                            @if($hariOperasional->aktif)
 
                                 <span class="badge badge-active">
                                     Aktif
@@ -328,7 +335,7 @@
                         <td class="text-center">
 
                             <a
-                                href="{{ route('kegiatan.show', $kegiatan) }}"
+                                href="{{ route('hari-operasional.show', $hariOperasional) }}"
                                 class="btn btn-outline-secondary action-btn"
                                 title="Lihat"
                             >
@@ -336,7 +343,7 @@
                             </a>
 
                             <a
-                                href="{{ route('kegiatan.edit', $kegiatan) }}"
+                                href="{{ route('hari-operasional.edit', $hariOperasional) }}"
                                 class="btn btn-outline-jade action-btn"
                                 title="Edit"
                             >
@@ -344,11 +351,12 @@
                             </a>
 
                             <form
-                                action="{{ route('kegiatan.destroy', $kegiatan) }}"
+                                action="{{ route('hari-operasional.destroy', $hariOperasional) }}"
                                 method="POST"
                                 class="d-inline delete-form"
-                                data-name="{{ $kegiatan->nama_kegiatan }}"
+                                data-name="{{ $hariOperasional->posyandu->nama_posyandu . ' - ' . $hariOperasional->nama_hari }}"
                             >
+
                                 @csrf
                                 @method('DELETE')
 
@@ -376,24 +384,24 @@
 
                                 <div class="empty-state-icon">
 
-                                    <i class="fas fa-list-check"></i>
+                                    <i class="fas fa-calendar-days"></i>
 
                                 </div>
 
                                 <h6 class="fw-semibold">
-                                    Belum Ada Data Kegiatan
+                                    Belum Ada Hari Operasional
                                 </h6>
 
                                 <p class="text-muted small mb-3">
-                                    Silakan tambahkan jenis kegiatan terlebih dahulu.
+                                    Silakan tambahkan hari operasional Posyandu.
                                 </p>
 
                                 <a
-                                    href="{{ route('kegiatan.create') }}"
+                                    href="{{ route('hari-operasional.create') }}"
                                     class="btn btn-jade btn-sm"
                                 >
                                     <i class="fas fa-plus me-1"></i>
-                                    Tambah Kegiatan
+                                    Tambah Hari Operasional
                                 </a>
 
                             </div>
@@ -410,11 +418,11 @@
 
     </div>
 
-    @if($kegiatans->hasPages())
+    @if($hariOperasionals->hasPages())
 
         <div class="px-3 py-3 border-top">
 
-            {{ $kegiatans->links() }}
+            {{ $hariOperasionals->links() }}
 
         </div>
 
@@ -434,12 +442,12 @@ document.addEventListener(
 
         const search =
             document.getElementById(
-                'searchKegiatan'
+                'searchHariOperasional'
             );
 
         const table =
             document.getElementById(
-                'kegiatanTable'
+                'hariOperasionalTable'
             );
 
         if (search && table) {

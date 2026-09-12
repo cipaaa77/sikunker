@@ -6,14 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Kegiatan extends Model
+class Wilayah extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'kode_kegiatan',
-        'nama_kegiatan',
-        'deskripsi',
+        'nama_wilayah',
+        'rw',
+        'kelurahan',
+        'kecamatan',
+        'alamat',
         'aktif',
     ];
 
@@ -21,8 +23,8 @@ class Kegiatan extends Model
         'aktif' => 'boolean',
     ];
 
-    public function jadwalDetails(): HasMany
+    public function posyandus(): HasMany
     {
-        return $this->hasMany(JadwalDetail::class);
+        return $this->hasMany(Posyandu::class);
     }
 }

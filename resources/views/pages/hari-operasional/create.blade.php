@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Kegiatan')
+@section('title', 'Tambah Hari Operasional')
 
 @push('styles')
 
@@ -47,13 +47,15 @@
         margin-bottom: 6px;
     }
 
-    .form-control {
+    .form-control,
+    .form-select {
         border-color: #dfe5e7;
         font-size: 13px;
         border-radius: 7px;
     }
 
-    .form-control:focus {
+    .form-control:focus,
+    .form-select:focus {
         border-color: #21665c;
         box-shadow: 0 0 0 .15rem rgba(33, 102, 92, .10);
     }
@@ -61,11 +63,6 @@
     .form-check-input:checked {
         background-color: #174a43;
         border-color: #174a43;
-    }
-
-    .form-check-input:focus {
-        border-color: #21665c;
-        box-shadow: 0 0 0 .15rem rgba(33, 102, 92, .10);
     }
 
     .info-box {
@@ -103,11 +100,11 @@
             <div class="page-card-header">
 
                 <div class="page-title-small">
-                    Tambah Kegiatan
+                    Tambah Hari Operasional
                 </div>
 
                 <p class="page-description">
-                    Tambahkan jenis kegiatan baru ke dalam sistem.
+                    Tambahkan hari dan jam operasional Posyandu.
                 </p>
 
             </div>
@@ -118,92 +115,50 @@
 
                 <form
                     method="POST"
-                    action="{{ route('kegiatan.store') }}"
+                    action="{{ route('hari-operasional.store') }}"
                     class="confirm-submit"
                     data-action="create"
-                    data-message="Data kegiatan akan disimpan ke dalam sistem."
+                    data-message="Data hari operasional akan disimpan ke dalam sistem."
                 >
 
                     @csrf
 
-                    <div class="row">
-
-                        <div class="col-md-6 mb-3">
-
-                            <label
-                                for="kode_kegiatan"
-                                class="form-label"
-                            >
-                                Kode Kegiatan
-                                <span class="text-danger">*</span>
-                            </label>
-
-                            <input
-                                type="text"
-                                name="kode_kegiatan"
-                                id="kode_kegiatan"
-                                class="form-control @error('kode_kegiatan') is-invalid @enderror"
-                                value="{{ old('kode_kegiatan') }}"
-                                placeholder="Contoh: KGT-001"
-                                required
-                            >
-
-                            @error('kode_kegiatan')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
-
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-
-                            <label
-                                for="nama_kegiatan"
-                                class="form-label"
-                            >
-                                Nama Kegiatan
-                                <span class="text-danger">*</span>
-                            </label>
-
-                            <input
-                                type="text"
-                                name="nama_kegiatan"
-                                id="nama_kegiatan"
-                                class="form-control @error('nama_kegiatan') is-invalid @enderror"
-                                value="{{ old('nama_kegiatan') }}"
-                                placeholder="Contoh: Imunisasi"
-                                required
-                            >
-
-                            @error('nama_kegiatan')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
-
-                        </div>
-
-                    </div>
-
-                    <div class="mb-4">
+                    <div class="mb-3">
 
                         <label
-                            for="deskripsi"
+                            for="posyandu_id"
                             class="form-label"
                         >
-                            Deskripsi
+                            Posyandu
+                            <span class="text-danger">*</span>
                         </label>
 
-                        <textarea
-                            name="deskripsi"
-                            id="deskripsi"
-                            rows="5"
-                            class="form-control @error('deskripsi') is-invalid @enderror"
-                            placeholder="Masukkan deskripsi kegiatan"
-                        >{{ old('deskripsi') }}</textarea>
+                        <select
+                            name="posyandu_id"
+                            id="posyandu_id"
+                            class="form-select @error('posyandu_id') is-invalid @enderror"
+                            required
+                        >
 
-                        @error('deskripsi')
+                            <option value="">
+                                Pilih Posyandu
+                            </option>
+
+                            @foreach($posyandus as $posyandu)
+
+                                <option
+                                    value="{{ $posyandu->id }}"
+                                    {{ old('posyandu_id') == $posyandu->id ? 'selected' : '' }}
+                                >
+                                    {{ $posyandu->nama_posyandu }}
+                                    - {{ $posyandu->kode_posyandu }}
+                                </option>
+
+                            @endforeach
+
+                        </select>
+
+                        @error('posyandu_id')
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>
@@ -211,14 +166,123 @@
 
                     </div>
 
+                    <div class="mb-3">
+
+                        <label
+                            for="hari"
+                            class="form-label"
+                        >
+                            Hari Operasional
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <select
+                            name="hari"
+                            id="hari"
+                            class="form-select @error('hari') is-invalid @enderror"
+                            required
+                        >
+
+                            <option value="">
+                                Pilih hari
+                            </option>
+
+                            @foreach([
+                                1 => 'Senin',
+                                2 => 'Selasa',
+                                3 => 'Rabu',
+                                4 => 'Kamis',
+                                5 => 'Jumat',
+                                6 => 'Sabtu',
+                                7 => 'Minggu'
+                            ] as $value => $nama)
+
+                                <option
+                                    value="{{ $value }}"
+                                    {{ old('hari') == $value ? 'selected' : '' }}
+                                >
+                                    {{ $nama }}
+                                </option>
+
+                            @endforeach
+
+                        </select>
+
+                        @error('hari')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-md-6 mb-3">
+
+                            <label
+                                for="jam_mulai"
+                                class="form-label"
+                            >
+                                Jam Mulai
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="time"
+                                name="jam_mulai"
+                                id="jam_mulai"
+                                class="form-control @error('jam_mulai') is-invalid @enderror"
+                                value="{{ old('jam_mulai', '08:00') }}"
+                                required
+                            >
+
+                            @error('jam_mulai')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label
+                                for="jam_selesai"
+                                class="form-label"
+                            >
+                                Jam Selesai
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="time"
+                                name="jam_selesai"
+                                id="jam_selesai"
+                                class="form-control @error('jam_selesai') is-invalid @enderror"
+                                value="{{ old('jam_selesai', '11:00') }}"
+                                required
+                            >
+
+                            @error('jam_selesai')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+                    </div>
+
                     <div class="info-box mb-4">
 
                         <div class="info-box-title">
-                            Status Kegiatan
+                            Status Operasional
                         </div>
 
                         <p class="info-box-text">
-                            Kegiatan aktif dapat dipilih ketika membuat jadwal Posyandu.
+                            Hari operasional aktif dapat digunakan sebagai acuan
+                            pembuatan jadwal Posyandu.
                         </p>
 
                         <div class="form-check form-switch mt-3">
@@ -246,7 +310,7 @@
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top">
 
                         <a
-                            href="{{ route('kegiatan.index') }}"
+                            href="{{ route('hari-operasional.index') }}"
                             class="btn btn-outline-secondary btn-sm"
                         >
                             <i class="fas fa-arrow-left me-1"></i>
@@ -258,7 +322,7 @@
                             class="btn btn-jade btn-sm"
                         >
                             <i class="fas fa-save me-1"></i>
-                            Simpan Kegiatan
+                            Simpan Hari Operasional
                         </button>
 
                     </div>

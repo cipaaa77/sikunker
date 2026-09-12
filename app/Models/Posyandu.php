@@ -4,22 +4,36 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Kegiatan extends Model
+class Posyandu extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'kode_kegiatan',
-        'nama_kegiatan',
-        'deskripsi',
+        'wilayah_id',
+        'kode_posyandu',
+        'nama_posyandu',
+        'alamat',
+        'ketua',
+        'kontak',
         'aktif',
     ];
 
     protected $casts = [
         'aktif' => 'boolean',
     ];
+
+    public function wilayah(): BelongsTo
+    {
+        return $this->belongsTo(Wilayah::class);
+    }
+
+    public function hariOperasionals(): HasMany
+    {
+        return $this->hasMany(HariOperasional::class);
+    }
 
     public function jadwalDetails(): HasMany
     {

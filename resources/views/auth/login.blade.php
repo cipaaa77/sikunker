@@ -1,117 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.guest')
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title> {{ env('APP_NAME') }}</title>
-    <link rel="stylesheet" href="{{ asset('assets') }}/vendors/mdi/css/materialdesignicons.min.css">
-    <link rel="stylesheet" href="{{ asset('assets') }}/vendors/css/vendor.bundle.base.css">
-    <link rel="stylesheet" href="{{ asset('assets') }}/css/style.css">
+@section('content')
 
-    <link rel="shortcut icon" href="{{ asset('assets') }}/images/favicon.png" />
-</head>
+<div class="container-fluid">
+    <div class="row login-page">
 
-<body>
-    <div class="container-scroller d-flex">
-        <div class="container-fluid page-body-wrapper full-page-wrapper d-flex">
-            <div class="content-wrapper d-flex align-items-center auth px-0">
-                <div class="row w-100 mx-0">
-                    <div class="col-lg-4 mx-auto">
-                        <div class="auth-form-light text-left py-5 px-4 px-sm-5">
-                            <div class="brand-logo text-center"> <img src="{{ asset('assets') }}/logo.jpeg"
-                                    alt="logo" style="margin: 0 auto; display: block;">
-                            </div>
-                            <h4>Hello! let's get started</h4>
-                            <h6 class="font-weight-light">Sign in to continue.</h6>
-                            <form class="pt-3" method="post" action="{{ route('login.post') }}">
-                                @csrf
-                                <div class="form-group">
-                                    <input type="email" name="email" class="form-control form-control-lg"
-                                        id="exampleInputEmail1" placeholder="Email">
-                                </div>
-                                <div class="form-group">
-                                    <input type="password" name="password" class="form-control form-control-lg"
-                                        id="exampleInputPassword1" placeholder="Password">
-                                </div>
-                                <div class="mt-3">
-                                    <button
-                                        class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn">SIGN
-                                        IN</button>
-                                </div>
-                                <div class="my-2 d-flex justify-content-between align-items-center">
-                                    <div class="form-check">
-                                        <label class="form-check-label text-muted">
-                                            <input type="checkbox" class="form-check-input">
-                                            Keep me signed in
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="text-center mt-4 font-weight-light">
-                                    Don't have an account? <a href="#" class="text-primary">Contact
-                                        Administrator</a>
-                                </div>
-                            </form>
+        {{-- FORM LOGIN --}}
+        <div class="col-lg-6 login-left">
+            <div class="login-box">
+
+                {{-- LOGO --}}
+                <div class="text-center">
+                    <img
+                        src="{{ asset('images/logo-posyandu.png') }}"
+                        class="login-logo"
+                        alt="Logo Posyandu"
+                    >
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-md-5">
+
+                        <div class="mb-4">
+                            <h3 class="login-title mb-2">
+                                Selamat Datang
+                            </h3>
+
+                            <p class="login-subtitle mb-0">
+                                Masukkan email dan password untuk masuk
+                                ke sistem.
+                            </p>
                         </div>
+
+                        {{-- ALERT --}}
+                        @if(session('success'))
+                            <div class="alert alert-success">
+                                {{ session('success') }}
+                            </div>
+                        @endif
+
+                        @if(session('error'))
+                            <div class="alert alert-danger">
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
+                        <form
+                            method="POST"
+                            action="{{ route('login.process') }}"
+                        >
+                            @csrf
+
+                            {{-- EMAIL --}}
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Email
+                                </label>
+
+                                <div class="input-group">
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        class="form-control"
+                                        placeholder="Masukkan email"
+                                        value="{{ old('email') }}"
+                                        autofocus
+                                    >
+
+                                    <span class="input-group-text">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                </div>
+
+                                @error('email')
+                                    <div class="text-danger small mt-1">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+
+                            {{-- PASSWORD --}}
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Password
+                                </label>
+
+                                <div class="input-group">
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        class="form-control"
+                                        placeholder="Masukkan password"
+                                    >
+
+                                    <span class="input-group-text">
+                                        <i
+                                            class="fas fa-eye showpass"
+                                            style="cursor:pointer"
+                                        ></i>
+                                    </span>
+                                </div>
+
+                                @error('password')
+                                    <div class="text-danger small mt-1">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+
+                            {{-- BUTTON --}}
+                            <button
+                                type="submit"
+                                class="btn btn-login text-white w-100 mt-3"
+                            >
+                                <i class="fas fa-right-to-bracket me-2"></i>
+                                Masuk
+                            </button>
+
+                        </form>
+
                     </div>
                 </div>
+
+                <div class="text-center mt-4 text-muted small">
+                    © {{ date('Y') }} Sistem Penjadwalan Posyandu
+                </div>
+
             </div>
-            <!-- content-wrapper ends -->
         </div>
-        <!-- page-body-wrapper ends -->
+
+
+        {{-- COVER KANAN --}}
+        <div class="col-lg-6 d-none d-lg-block login-right">
+
+            <div class="login-cover">
+
+                <div>
+                    <i class="fas fa-calendar-check fa-4x mb-4"></i>
+
+                    <h2>
+                        Sistem Penjadwalan Posyandu
+                    </h2>
+
+                    <p>
+                        Kelola jadwal kegiatan Posyandu dengan lebih
+                        terstruktur, mudah, dan terintegrasi.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
-    <script src="{{ asset('assets') }}/vendors/js/vendor.bundle.base.js"></script>
-    <script src="{{ asset('assets') }}/js/off-canvas.js"></script>
-    <script src="{{ asset('assets') }}/js/hoverable-collapse.js"></script>
-    <script src="{{ asset('assets') }}/js/template.js"></script>
-    <!-- endinject -->
+</div>
 
-
-    <script src="{{ asset('assets') }}/vendors/js/vendor.bundle.base.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script>
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
-        });
-
-        // 1. Success Message
-        @if (session('success'))
-            Toast.fire({
-                icon: 'success',
-                title: "{{ session('success') }}"
-            });
-        @endif
-
-        // 2. Single Error Message (Custom Flash)
-        @if (session('error'))
-            Toast.fire({
-                icon: 'error',
-                title: "{{ session('error') }}"
-            });
-        @endif
-
-        // 3. Validation Errors (Laravel $errors)
-        @if ($errors->any())
-            @php
-                $allErrors = implode('<br>', $errors->all());
-            @endphp
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                html: '{!! $allErrors !!}',
-                confirmButtonColor: '#6c757d' // Warna abu-abu untuk tombol
-            });
-        @endif
-    </script>
-</body>
-
-</html>
+@endsection

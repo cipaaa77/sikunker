@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Kegiatan')
+@section('title', 'Posyandu')
 
 @push('styles')
 
@@ -143,7 +143,7 @@
         }
 
         .table {
-            min-width: 700px;
+            min-width: 950px;
         }
 
     }
@@ -163,11 +163,11 @@
             <div class="col-md-7">
 
                 <div class="page-title-small">
-                    Data Kegiatan
+                    Data Posyandu
                 </div>
 
                 <p class="page-description">
-                    Kelola jenis kegiatan yang digunakan dalam penjadwalan Posyandu.
+                    Kelola data Posyandu yang digunakan dalam sistem penjadwalan.
                 </p>
 
             </div>
@@ -177,11 +177,13 @@
                 <div class="d-flex justify-content-md-end header-action">
 
                     <a
-                        href="{{ route('kegiatan.create') }}"
-                        class="btn btn-jade btn-sm"
-                    >
+                        href="{{ route('posyandu.create') }}"
+                        class="btn btn-jade btn-sm">
+
                         <i class="fas fa-plus me-1"></i>
-                        Tambah Kegiatan
+
+                        Tambah Posyandu
+
                     </a>
 
                 </div>
@@ -206,9 +208,9 @@
 
                     <input
                         type="text"
-                        id="searchKegiatan"
+                        id="searchPosyandu"
                         class="form-control form-control-sm"
-                        placeholder="Cari kode, nama kegiatan..."
+                        placeholder="Cari kode, nama, wilayah..."
                     >
 
                 </div>
@@ -220,7 +222,7 @@
                 <small class="text-muted">
 
                     Menampilkan
-                    <strong>{{ $kegiatans->total() }}</strong>
+                    <strong>{{ $posyandus->total() }}</strong>
                     data
 
                 </small>
@@ -235,8 +237,7 @@
 
         <table
             class="table table-hover align-items-center mb-0"
-            id="kegiatanTable"
-        >
+            id="posyanduTable">
 
             <thead>
 
@@ -247,15 +248,23 @@
                     </th>
 
                     <th>
-                        Kode Kegiatan
+                        Kode Posyandu
                     </th>
 
                     <th>
-                        Nama Kegiatan
+                        Nama Posyandu
                     </th>
 
                     <th>
-                        Deskripsi
+                        Wilayah
+                    </th>
+
+                    <th>
+                        Ketua
+                    </th>
+
+                    <th>
+                        Kontak
                     </th>
 
                     <th>
@@ -272,44 +281,71 @@
 
             <tbody>
 
-                @forelse($kegiatans as $index => $kegiatan)
+                @forelse($posyandus as $index => $posyandu)
 
                     <tr>
 
                         <td class="ps-4">
-                            {{ $kegiatans->firstItem() + $index }}
-                        </td>
 
-                        <td>
-
-                            <div class="fw-semibold text-dark">
-                                {{ $kegiatan->kode_kegiatan }}
-                            </div>
+                            {{ $posyandus->firstItem() + $index }}
 
                         </td>
 
                         <td>
 
                             <div class="fw-semibold text-dark">
-                                {{ $kegiatan->nama_kegiatan }}
+
+                                {{ $posyandu->kode_posyandu }}
+
                             </div>
 
                         </td>
 
                         <td>
 
-                            <div
-                                class="text-muted"
-                                style="max-width: 360px; overflow: hidden; text-overflow: ellipsis;"
-                            >
-                                {{ $kegiatan->deskripsi ?: '-' }}
+                            <div class="fw-semibold text-dark">
+
+                                {{ $posyandu->nama_posyandu }}
+
                             </div>
 
                         </td>
 
                         <td>
 
-                            @if($kegiatan->aktif)
+                            <div class="fw-semibold text-dark">
+
+                                {{ $posyandu->wilayah->nama_wilayah }}
+
+                            </div>
+
+                            @if($posyandu->wilayah->rw)
+
+                                <small class="text-muted">
+
+                                    {{ $posyandu->wilayah->rw }}
+
+                                </small>
+
+                            @endif
+
+                        </td>
+
+                        <td>
+
+                            {{ $posyandu->ketua ?: '-' }}
+
+                        </td>
+
+                        <td>
+
+                            {{ $posyandu->kontak ?: '-' }}
+
+                        </td>
+
+                        <td>
+
+                            @if($posyandu->aktif)
 
                                 <span class="badge badge-active">
                                     Aktif
@@ -328,36 +364,39 @@
                         <td class="text-center">
 
                             <a
-                                href="{{ route('kegiatan.show', $kegiatan) }}"
+                                href="{{ route('posyandu.show', $posyandu) }}"
                                 class="btn btn-outline-secondary action-btn"
-                                title="Lihat"
-                            >
+                                title="Lihat">
+
                                 <i class="fas fa-eye"></i>
+
                             </a>
 
                             <a
-                                href="{{ route('kegiatan.edit', $kegiatan) }}"
+                                href="{{ route('posyandu.edit', $posyandu) }}"
                                 class="btn btn-outline-jade action-btn"
-                                title="Edit"
-                            >
+                                title="Edit">
+
                                 <i class="fas fa-pen"></i>
+
                             </a>
 
                             <form
-                                action="{{ route('kegiatan.destroy', $kegiatan) }}"
+                                action="{{ route('posyandu.destroy', $posyandu) }}"
                                 method="POST"
                                 class="d-inline delete-form"
-                                data-name="{{ $kegiatan->nama_kegiatan }}"
-                            >
+                                data-name="{{ $posyandu->nama_posyandu }}">
+
                                 @csrf
                                 @method('DELETE')
 
                                 <button
                                     type="submit"
                                     class="btn btn-outline-danger action-btn"
-                                    title="Hapus"
-                                >
+                                    title="Hapus">
+
                                     <i class="fas fa-trash"></i>
+
                                 </button>
 
                             </form>
@@ -370,30 +409,32 @@
 
                     <tr>
 
-                        <td colspan="6">
+                        <td colspan="8">
 
                             <div class="empty-state">
 
                                 <div class="empty-state-icon">
 
-                                    <i class="fas fa-list-check"></i>
+                                    <i class="fas fa-house-medical"></i>
 
                                 </div>
 
                                 <h6 class="fw-semibold">
-                                    Belum Ada Data Kegiatan
+                                    Belum Ada Data Posyandu
                                 </h6>
 
                                 <p class="text-muted small mb-3">
-                                    Silakan tambahkan jenis kegiatan terlebih dahulu.
+                                    Silakan tambahkan Posyandu terlebih dahulu.
                                 </p>
 
                                 <a
-                                    href="{{ route('kegiatan.create') }}"
-                                    class="btn btn-jade btn-sm"
-                                >
+                                    href="{{ route('posyandu.create') }}"
+                                    class="btn btn-jade btn-sm">
+
                                     <i class="fas fa-plus me-1"></i>
-                                    Tambah Kegiatan
+
+                                    Tambah Posyandu
+
                                 </a>
 
                             </div>
@@ -410,11 +451,11 @@
 
     </div>
 
-    @if($kegiatans->hasPages())
+    @if($posyandus->hasPages())
 
         <div class="px-3 py-3 border-top">
 
-            {{ $kegiatans->links() }}
+            {{ $posyandus->links() }}
 
         </div>
 
@@ -434,12 +475,12 @@ document.addEventListener(
 
         const search =
             document.getElementById(
-                'searchKegiatan'
+                'searchPosyandu'
             );
 
         const table =
             document.getElementById(
-                'kegiatanTable'
+                'posyanduTable'
             );
 
         if (search && table) {

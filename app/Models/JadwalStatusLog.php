@@ -6,26 +6,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class JadwalDetail extends Model
+class JadwalStatusLog extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
         'jadwal_id',
-        'posyandu_id',
-        'kegiatan_id',
-        'tgl_mulai',
-        'tgl_selesai',
-        'jam_mulai',
-        'jam_selesai',
-        'tipe_kegiatan',
-        'status',
+        'user_id',
+        'status_lama',
+        'status_baru',
         'keterangan',
+        'created_at',
     ];
 
     protected $casts = [
-        'tgl_mulai' => 'date',
-        'tgl_selesai' => 'date',
+        'created_at' => 'datetime',
     ];
 
     public function jadwal(): BelongsTo
@@ -36,13 +33,8 @@ class JadwalDetail extends Model
         );
     }
 
-    public function posyandu(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Posyandu::class);
-    }
-
-    public function kegiatan(): BelongsTo
-    {
-        return $this->belongsTo(Kegiatan::class);
+        return $this->belongsTo(User::class);
     }
 }
