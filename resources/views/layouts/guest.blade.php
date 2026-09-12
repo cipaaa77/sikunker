@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>{{ config('app.name', 'Sistem Penjadwalan Posyandu') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('storage/logo_posyandu.png') }}">
+
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
@@ -80,27 +82,24 @@
             padding: 18px;
         }
 
-        .login-cover {
-            height: 100%;
-            min-height: calc(100vh - 36px);
-            border-radius: 18px;
-            background:
-                linear-gradient(
-                    rgba(31, 92, 77, .82),
-                    rgba(31, 92, 77, .82)
-                ),
-                url('{{ asset('images/posyandu-cover.jpg') }}');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 50px;
-            color: white;
+       .login-cover{
+            height:100%;
+            min-height:calc(100vh - 36px);
+            border-radius:18px;
+            background-image:
+                linear-gradient(rgba(23,63,53,.25),rgba(23,63,53,.25)),
+                url('{{ asset('storage/backcover2.png') }}');
+            background-size:cover;
+            background-position:center;
+            background-repeat:no-repeat;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            text-align:center;
+            padding:50px;
+            color:white;
         }
-
-        .login-cover h2 {
+                .login-cover h2 {
             font-weight: 700;
         }
 

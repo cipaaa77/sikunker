@@ -9,12 +9,23 @@ use Illuminate\Validation\Rule;
 
 class HariOperasionalController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $hariOperasionals = HariOperasional::with('posyandu')
-            ->orderBy('posyandu_id')
-            ->orderBy('hari')
-            ->paginate(10);
+        $query = HariOperasional::with('posyandu')
+            ->latest('id');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->whereHas('posyandu', function ($posyanduQuery) use ($search) {
+                $posyanduQuery
+                    ->where('nama_posyandu', 'like', "%{$search}%");
+            });
+        }
+
+        $hariOperasionals = $query
+            ->paginate(10)
+            ->withQueryString();
 
         return view(
             'pages.hari-operasional.index',

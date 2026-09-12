@@ -2,122 +2,152 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\JadwalBulanan;
-use App\Models\JadwalDetail;
 use App\Models\Posyandu;
-use App\Models\Kegiatan;
+use App\Models\JadwalDetail;
+use App\Models\JadwalBulanan;
 use App\Models\JadwalStatusLog;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $now = Carbon::now();
+        $today = Carbon::today();
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
 
         /*
         |--------------------------------------------------------------------------
-        | KPI
+        | POSYANDU AKTIF
         |--------------------------------------------------------------------------
         */
 
-        $totalPosyandu = Posyandu::where('aktif', true)->count();
-
-        $jadwalBulanIni = JadwalBulanan::where('bulan', $now->month)
-            ->where('tahun', $now->year)
-            ->count();
-
-        $totalTerjadwal = JadwalDetail::where('status', 'terjadwal')
-            ->whereMonth('tgl_mulai', $now->month)
-            ->whereYear('tgl_mulai', $now->year)
-            ->count();
-
-        $totalSelesai = JadwalDetail::where('status', 'selesai')
-            ->whereMonth('tgl_mulai', $now->month)
-            ->whereYear('tgl_mulai', $now->year)
-            ->count();
-
-        /*
-        |--------------------------------------------------------------------------
-        | TIME SERIES - 6 BULAN TERAKHIR
-        |--------------------------------------------------------------------------
-        */
-
-        $chartLabels = [];
-        $chartJadwal = [];
-
-        for ($i = 5; $i >= 0; $i--) {
-            $date = $now->copy()->subMonths($i);
-
-            $chartLabels[] = $date->translatedFormat('M Y');
-
-            $chartJadwal[] = JadwalDetail::whereMonth(
-                'tgl_mulai',
-                $date->month
-            )
-                ->whereYear(
-                    'tgl_mulai',
-                    $date->year
-                )
-                ->count();
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | DISTRIBUSI KEGIATAN
-        |--------------------------------------------------------------------------
-        */
-
-        $activityDistribution = Kegiatan::query()
+        $totalPosyandu = Posyandu::query()
             ->where('aktif', true)
-            ->withCount([
-                'jadwalDetails as total_jadwal' => function ($query) {
-                    $query->whereMonth(
-                        'tgl_mulai',
-                        now()->month
-                    )->whereYear(
-                        'tgl_mulai',
-                        now()->year
-                    );
-                }
-            ])
-            ->orderByDesc('total_jadwal')
-            ->get();
+            ->count();
 
         /*
         |--------------------------------------------------------------------------
-        | LOG AKTIVITAS TERBARU
+        | QUERY DASAR DETAIL JADWAL
+        |--------------------------------------------------------------------------
+        |
+        | Hanya mengambil jadwal dari Posyandu yang masih aktif.
+        |
+        */
+
+        $activeScheduleQuery = JadwalDetail::query()
+            ->whereHas('posyandu', function ($query) {
+                $query->where('aktif', true);
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | JADWAL BULAN INI
         |--------------------------------------------------------------------------
         */
 
-        $activityLogs = JadwalStatusLog::with([
-            'user',
-            'jadwal',
-        ])
-            ->latest('created_at')
-            ->limit(8)
-            ->get();
+        $jadwalBulanIni = (clone $activeScheduleQuery)
+            ->whereMonth('tgl_mulai', $currentMonth)
+            ->whereYear('tgl_mulai', $currentYear)
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL TERJADWAL
+        |--------------------------------------------------------------------------
+        */
+$totalTerjadwal = (clone $activeScheduleQuery)
+    ->whereHas('jadwal', function ($query) {
+        $query->where('status', 'disetujui');
+    })
+    ->whereDate('tgl_mulai', '>=', $today)
+    ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL SELESAI
+        |--------------------------------------------------------------------------
+        */
+
+  $totalSelesai = (clone $activeScheduleQuery)
+    ->whereHas('jadwal', function ($query) {
+        $query->where('status', 'disetujui');
+    })
+    ->whereDate('tgl_mulai', '<', $today)
+    ->count();
+        /*
+        |--------------------------------------------------------------------------
+        | STATUS JADWAL BULANAN
+        |--------------------------------------------------------------------------
+        */
+
+        $totalDraft = JadwalBulanan::query()
+            ->where('status', 'draft')
+            ->count();
+
+        $totalDiajukan = JadwalBulanan::query()
+            ->where('status', 'diajukan')
+            ->count();
+
+        $totalDisetujui = JadwalBulanan::query()
+            ->where('status', 'disetujui')
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL JADWAL BULANAN
+        |--------------------------------------------------------------------------
+        */
+
+        $totalJadwal = JadwalBulanan::query()->count();
 
         /*
         |--------------------------------------------------------------------------
         | JADWAL TERDEKAT
         |--------------------------------------------------------------------------
+        |
+        | Jadwal Posyandu nonaktif tidak akan ditampilkan.
+        |
         */
 
-        $upcomingSchedules = JadwalDetail::with([
-            'posyandu.wilayah',
-            'kegiatan',
-        ])
-            ->where('status', 'terjadwal')
-            ->whereDate('tgl_mulai', '>=', $now->toDateString())
-            ->orderBy('tgl_mulai')
-            ->orderBy('jam_mulai')
-            ->limit(8)
+    $upcomingSchedules = JadwalDetail::query()
+    ->with([
+        'posyandu.wilayah',
+        'kegiatan',
+        'jadwal',
+    ])
+    ->whereHas('posyandu', function ($query) {
+        $query->where('aktif', true);
+    })
+    ->whereHas('jadwal', function ($query) {
+        $query->where('status', 'disetujui');
+    })
+    ->whereDate('tgl_mulai', '>=', $today)
+    ->orderBy('tgl_mulai')
+    ->orderBy('jam_mulai')
+    ->limit(5)
+    ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | RIWAYAT PERUBAHAN STATUS
+        |--------------------------------------------------------------------------
+        */
+
+        $activityLogs = JadwalStatusLog::query()
+            ->with([
+                'user',
+                'jadwal',
+            ])
+            ->latest()
+            ->limit(5)
             ->get();
 
         /*
         |--------------------------------------------------------------------------
-        | STATISTIK POSYANDU
+        | RINGKASAN PER POSYANDU
         |--------------------------------------------------------------------------
         */
 
@@ -126,63 +156,80 @@ class DashboardController extends Controller
             ->with('wilayah')
             ->withCount([
                 'jadwalDetails as total_jadwal' => function ($query) {
-                    $query->whereMonth(
-                        'tgl_mulai',
-                        now()->month
-                    )->whereYear(
-                        'tgl_mulai',
-                        now()->year
-                    );
+                    $query->whereHas('jadwal', function ($jadwalQuery) {
+                        $jadwalQuery->whereIn('status', [
+                            'draft',
+                            'diajukan',
+                            'disetujui',
+                        ]);
+                    });
                 },
             ])
             ->orderByDesc('total_jadwal')
+            ->orderBy('nama_posyandu')
+            ->limit(10)
             ->get();
 
         /*
         |--------------------------------------------------------------------------
-        | STATUS JADWAL
+        | DISTRIBUSI KEGIATAN
         |--------------------------------------------------------------------------
         */
 
-        $totalDraft = JadwalBulanan::where('status', 'draft')->count();
-
-        $totalDiajukan = JadwalBulanan::where('status', 'diajukan')->count();
-
-        $totalDisetujui = JadwalBulanan::where('status', 'disetujui')->count();
-
-        $totalFinal = JadwalBulanan::where('status', 'final')->count();
+        $activityDistribution = JadwalDetail::query()
+            ->select(
+                'kegiatan_id',
+                DB::raw('COUNT(*) as total_jadwal')
+            )
+            ->with('kegiatan')
+            ->whereHas('posyandu', function ($query) {
+                $query->where('aktif', true);
+            })
+            ->groupBy('kegiatan_id')
+            ->orderByDesc('total_jadwal')
+            ->limit(10)
+            ->get();
 
         /*
         |--------------------------------------------------------------------------
-        | DATA TAMBAHAN
+        | DATA CHART 6 BULAN TERAKHIR
         |--------------------------------------------------------------------------
         */
 
-        $totalKegiatan = Kegiatan::where('aktif', true)->count();
+        $chartLabels = [];
+        $chartJadwal = [];
 
-        $totalJadwal = JadwalBulanan::count();
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()
+                ->startOfMonth()
+                ->subMonths($i);
 
-        return view('dashboard', compact(
-            'totalPosyandu',
-            'jadwalBulanIni',
-            'totalTerjadwal',
-            'totalSelesai',
+            $chartLabels[] = $date->translatedFormat('M Y');
 
-            'chartLabels',
-            'chartJadwal',
+            $chartJadwal[] = JadwalDetail::query()
+                ->whereHas('posyandu', function ($query) {
+                    $query->where('aktif', true);
+                })
+                ->whereMonth('tgl_mulai', $date->month)
+                ->whereYear('tgl_mulai', $date->year)
+                ->count();
+        }
 
-            'activityDistribution',
-            'activityLogs',
-            'upcomingSchedules',
-            'posyanduSummary',
-
-            'totalDraft',
-            'totalDiajukan',
-            'totalDisetujui',
-            'totalFinal',
-
-            'totalKegiatan',
-            'totalJadwal'
-        ));
+     return view('dashboard', compact(
+    'totalPosyandu',
+    'jadwalBulanIni',
+    'totalTerjadwal',
+    'totalSelesai',
+    'totalDraft',
+    'totalDiajukan',
+    'totalDisetujui',
+    'totalJadwal',
+    'upcomingSchedules',
+    'activityLogs',
+    'posyanduSummary',
+    'activityDistribution',
+    'chartLabels',
+    'chartJadwal'
+));
     }
 }

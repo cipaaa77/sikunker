@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Kegiatan extends Model
 {
     use HasFactory;
+
+    protected $table = 'kegiatans';
 
     protected $fillable = [
         'kode_kegiatan',
@@ -21,8 +22,11 @@ class Kegiatan extends Model
         'aktif' => 'boolean',
     ];
 
-    public function jadwalDetails(): HasMany
+    public function jadwalDetails()
     {
-        return $this->hasMany(JadwalDetail::class);
+        return $this->hasMany(
+            JadwalDetail::class,
+            'kegiatan_id'
+        );
     }
 }

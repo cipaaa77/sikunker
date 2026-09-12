@@ -11,44 +11,31 @@ return new class extends Migration
         Schema::create('jadwal_status_logs', function (Blueprint $table) {
             $table->id();
 
-            /*
-             * Jadwal yang statusnya berubah
-             */
             $table->foreignId('jadwal_id')
                 ->constrained('jadwal_bulanans')
+                ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
-            /*
-             * User yang melakukan perubahan
-             */
             $table->foreignId('user_id')
                 ->constrained('users')
+                ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
-            /*
-             * Status sebelum perubahan
-             */
-            $table->string('status_lama')->nullable();
+            $table->enum('status_lama', [
+                'draft',
+                'diajukan',
+                'disetujui',
+            ])->nullable();
 
-            /*
-             * Status setelah perubahan
-             */
-            $table->string('status_baru');
+            $table->enum('status_baru', [
+                'draft',
+                'diajukan',
+                'disetujui',
+            ]);
 
-            /*
-             * Keterangan perubahan
-             */
             $table->text('keterangan')->nullable();
 
-            /*
-             * Log hanya membutuhkan created_at
-             */
             $table->timestamp('created_at')->useCurrent();
-
-            $table->index('jadwal_id');
-            $table->index('user_id');
-            $table->index('status_baru');
-            $table->index('created_at');
         });
     }
 

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title','Dashboard') - Sistem Penjadwalan Posyandu</title>
+    <link rel="icon" type="image/png" href="{{ asset('storage/logo_posyandu.png') }}">
+
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
@@ -43,13 +45,12 @@
             top:0;
             left:0;
             width:100%;
-            height:25vh;
-            min-height:180px;
+            height:360px;
             z-index:0;
             pointer-events:none;
-            background-image:url('{{ asset('storage/backcover.png') }}');
+            background-image:url('{{ asset('storage/backcover2.png') }}');
             background-size:cover;
-            background-position:center 5%;
+            background-position:center 0%;
             background-repeat:no-repeat;
         }
 
@@ -767,16 +768,13 @@
     {{-- SIDEBAR --}}
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <img src="{{ asset('images/logo.png') }}" alt="Logo Posyandu" class="brand-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-
-            <div class="brand-logo-placeholder" style="display:none;">
-                <i class="fas fa-house-medical"></i>
-            </div>
+            <img src="{{ asset('storage/logo_posyandu.png') }}" alt="Logo Posyandu" class="brand-logo">
 
             <div class="sidebar-brand-text">
-                <div class="sidebar-brand-title">Posyandu</div>
+                <div class="sidebar-brand-title">Posyandu Syifa</div>
                 <div class="sidebar-brand-subtitle">Sistem Penjadwalan</div>
             </div>
+        </div>
         </div>
 
         <nav class="sidebar-menu">
@@ -809,17 +807,23 @@
                 <span>Hari Operasional</span>
             </a>
 
+   @if(auth()->check() && auth()->user()->role === 'admin')
+    <div class="menu-title mt-4">Administrasi</div>
+
+    <a href="{{ route('admin.users.index') }}"
+       class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+        <i class="fas fa-users-cog"></i>
+        <span>Master User</span>
+    </a>
+@endif
+
             <div class="menu-title mt-4">Transaksi</div>
 
             <a href="{{ route('jadwal.index') }}" class="{{ request()->routeIs('jadwal.*') ? 'active' : '' }}">
                 <i class="fas fa-calendar-check"></i>
                 <span>Jadwal Bulanan</span>
             </a>
-
-            <a href="{{ route('generate-jadwal.index') }}" class="{{ request()->routeIs('generate-jadwal.*') ? 'active' : '' }}">
-                <i class="fas fa-wand-magic-sparkles"></i>
-                <span>Generate Jadwal</span>
-            </a>
+       
 
             <div class="menu-title mt-4">Laporan</div>
 

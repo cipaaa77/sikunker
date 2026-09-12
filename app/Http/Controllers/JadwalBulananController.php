@@ -2,201 +2,133 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\JadwalBulananExport;
-use App\Models\HariOperasional;
 use App\Models\JadwalBulanan;
 use App\Models\JadwalDetail;
-use App\Models\Kegiatan;
 use App\Models\Posyandu;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Kegiatan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class JadwalBulananController extends Controller
 {
-    public function index()
-    {
-        $jadwals = JadwalBulanan::with('dibuatOleh')
-            ->latest('tahun')
-            ->latest('bulan')
-            ->paginate(10);
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
 
-        return view('pages.jadwal.index', compact('jadwals'));
+public function index(Request $request)
+{
+    $query = JadwalBulanan::query()
+        ->with([
+            'pembuat',
+            'approver',
+            'details.posyandu.wilayah',
+            'details.kegiatan',
+        ])
+        ->orderByDesc('tahun')
+        ->orderByDesc('bulan');
+
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
     }
+
+    if ($request->filled('tahun')) {
+        $query->where('tahun', $request->tahun);
+    }
+
+    $jadwals = $query
+        ->paginate(10)
+        ->withQueryString();
+
+    $tahunList = JadwalBulanan::query()
+        ->select('tahun')
+        ->distinct()
+        ->orderByDesc('tahun')
+        ->pluck('tahun');
+
+    return view(
+        'pages.jadwal.index',
+        compact(
+            'jadwals',
+            'tahunList'
+        )
+    );
+}
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
+    */
 
     public function create()
     {
-        $posyandus = Posyandu::where('aktif', true)
-            ->with('wilayah')
+        $posyandus = Posyandu::query()
+            ->where('aktif', true)
+            ->with([
+                'wilayah',
+                'hariOperasionals' => function ($query) {
+                    $query
+                        ->where('aktif', true)
+                        ->orderBy('hari')
+                        ->orderBy('jam_mulai');
+                },
+            ])
             ->orderBy('nama_posyandu')
             ->get();
 
-        $kegiatans = Kegiatan::where('aktif', true)
+        $kegiatans = Kegiatan::query()
+            ->where('aktif', true)
             ->orderBy('nama_kegiatan')
             ->get();
 
-        return view('pages.jadwal.create', compact(
-            'posyandus',
-            'kegiatans'
-        ));
+        return view(
+            'pages.jadwal.create',
+            compact(
+                'posyandus',
+                'kegiatans'
+            )
+        );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | STORE
+    |--------------------------------------------------------------------------
+    */
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'bulan' => [
+            'periode' => [
                 'required',
-                'integer',
-                'between:1,12',
+                'date_format:Y-m',
             ],
-            'tahun' => [
-                'required',
-                'integer',
-                'min:2020',
-                'max:2100',
-            ],
-            'catatan' => [
-                'nullable',
-                'string',
-            ],
-        ], [
-            'bulan.required' => 'Bulan wajib dipilih.',
-            'bulan.between' => 'Bulan tidak valid.',
-            'tahun.required' => 'Tahun wajib diisi.',
-            'tahun.min' => 'Tahun tidak valid.',
-            'tahun.max' => 'Tahun tidak valid.',
-        ]);
 
-        $exists = JadwalBulanan::where('bulan', $validated['bulan'])
-            ->where('tahun', $validated['tahun'])
-            ->exists();
-
-        if ($exists) {
-            return back()
-                ->withInput()
-                ->with(
-                    'error',
-                    'Jadwal untuk bulan dan tahun tersebut sudah tersedia.'
-                );
-        }
-
-        $jadwal = DB::transaction(function () use ($validated) {
-            $jadwal = JadwalBulanan::create([
-                'bulan' => $validated['bulan'],
-                'tahun' => $validated['tahun'],
-                'status' => 'draft',
-                'catatan' => $validated['catatan'] ?? null,
-                'dibuat_oleh' => auth()->id(),
-            ]);
-
-            $this->createStatusLog(
-                $jadwal,
-                null,
-                'draft',
-                'Jadwal bulanan dibuat.'
-            );
-
-            return $jadwal;
-        });
-
-        return redirect()
-            ->route('jadwal.edit', $jadwal)
-            ->with(
-                'success',
-                'Jadwal bulanan berhasil dibuat. Silakan susun detail jadwal.'
-            );
-    }
-
-    public function show(JadwalBulanan $jadwal)
-    {
-        $jadwal->load([
-            'dibuatOleh',
-            'approvedBy',
-            'details' => function ($query) {
-                $query
-                    ->orderBy('tgl_mulai')
-                    ->orderBy('jam_mulai');
-            },
-            'details.posyandu.wilayah',
-            'details.kegiatan',
-            'approvals.user',
-            'statusLogs.user',
-        ]);
-
-        return view('pages.jadwal.show', compact('jadwal'));
-    }
-
-    public function edit(JadwalBulanan $jadwal)
-    {
-        $jadwal->load([
-            'details' => function ($query) {
-                $query
-                    ->orderBy('tgl_mulai')
-                    ->orderBy('jam_mulai');
-            },
-            'details.posyandu',
-            'details.kegiatan',
-        ]);
-
-        $posyandus = Posyandu::where('aktif', true)
-            ->with('wilayah')
-            ->orderBy('nama_posyandu')
-            ->get();
-
-        $kegiatans = Kegiatan::where('aktif', true)
-            ->orderBy('nama_kegiatan')
-            ->get();
-
-        $hariOperasionals = HariOperasional::where('aktif', true)
-            ->with('posyandu')
-            ->orderBy('posyandu_id')
-            ->orderBy('hari')
-            ->get();
-
-        return view('pages.jadwal.edit', compact(
-            'jadwal',
-            'posyandus',
-            'kegiatans',
-            'hariOperasionals'
-        ));
-    }
-
-    public function update(Request $request, JadwalBulanan $jadwal)
-    {
-        if ($jadwal->status === 'final') {
-            return back()->with(
-                'error',
-                'Jadwal yang sudah final tidak dapat diubah.'
-            );
-        }
-
-        $validated = $request->validate([
             'catatan' => [
                 'nullable',
                 'string',
             ],
 
             'details' => [
-                'nullable',
+                'required',
                 'array',
-            ],
-
-            'details.*.id' => [
-                'nullable',
-                'integer',
-                'exists:jadwal_details,id',
+                'min:1',
             ],
 
             'details.*.posyandu_id' => [
                 'required',
+                'integer',
                 'exists:posyandus,id',
             ],
 
             'details.*.kegiatan_id' => [
                 'required',
+                'integer',
                 'exists:kegiatans,id',
             ],
 
@@ -211,65 +143,241 @@ class JadwalBulananController extends Controller
             ],
 
             'details.*.jam_mulai' => [
-                'nullable',
+                'required',
                 'date_format:H:i',
             ],
 
             'details.*.jam_selesai' => [
-                'nullable',
-                'date_format:H:i',
-            ],
-
-            'details.*.tipe_kegiatan' => [
                 'required',
-                'in:DG,LG',
-            ],
-
-            'details.*.status' => [
-                'nullable',
-                'in:terjadwal,selesai,dibatalkan',
+                'date_format:H:i',
             ],
 
             'details.*.keterangan' => [
                 'nullable',
                 'string',
             ],
-        ], [
-            'details.*.posyandu_id.required' =>
-                'Posyandu wajib dipilih.',
-
-            'details.*.kegiatan_id.required' =>
-                'Kegiatan wajib dipilih.',
-
-            'details.*.tgl_mulai.required' =>
-                'Tanggal mulai wajib diisi.',
-
-            'details.*.tgl_selesai.required' =>
-                'Tanggal selesai wajib diisi.',
-
-            'details.*.tipe_kegiatan.required' =>
-                'Tipe kegiatan wajib dipilih.',
         ]);
 
-        $details = $validated['details'] ?? [];
+        $periode = Carbon::createFromFormat(
+            'Y-m',
+            $validated['periode']
+        );
+
+        $bulan = $periode->month;
+        $tahun = $periode->year;
 
         $this->validateDetailDates(
-            $details,
-            $jadwal
+            $validated['details'],
+            $bulan,
+            $tahun
         );
 
         $this->validateDetailTimes(
-            $details
+            $validated['details']
         );
 
         $this->validateScheduleConflicts(
-            $details
+            $validated['details']
+        );
+
+        $jadwal = DB::transaction(function () use (
+            $validated,
+            $bulan,
+            $tahun
+        ) {
+            $alreadyExists = JadwalBulanan::query()
+                ->where('bulan', $bulan)
+                ->where('tahun', $tahun)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($alreadyExists) {
+                throw ValidationException::withMessages([
+                    'periode' => 'Jadwal untuk bulan dan tahun tersebut sudah tersedia.',
+                ]);
+            }
+
+            /*
+             * Status ini milik tabel jadwal_bulanans.
+             * BUKAN milik tabel jadwal_details.
+             */
+            $jadwal = JadwalBulanan::create([
+                'bulan' => $bulan,
+                'tahun' => $tahun,
+                'status' => 'draft',
+                'catatan' => $validated['catatan'] ?? null,
+                'dibuat_oleh' => auth()->id(),
+            ]);
+
+            foreach ($validated['details'] as $detail) {
+                $jadwal->details()->create([
+                    'posyandu_id' => $detail['posyandu_id'],
+                    'kegiatan_id' => $detail['kegiatan_id'],
+                    'tgl_mulai' => $detail['tgl_mulai'],
+                    'tgl_selesai' => $detail['tgl_selesai'],
+                    'jam_mulai' => $detail['jam_mulai'],
+                    'jam_selesai' => $detail['jam_selesai'],
+                    'keterangan' => $detail['keterangan'] ?? null,
+                ]);
+            }
+
+            return $jadwal;
+        });
+
+        return redirect()
+            ->route('jadwal.edit', $jadwal)
+            ->with(
+                'success',
+                'Jadwal bulanan berhasil dibuat.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT
+    |--------------------------------------------------------------------------
+    */
+
+    public function edit(JadwalBulanan $jadwal)
+    {
+        if ($jadwal->status === 'disetujui') {
+            return redirect()
+                ->route('jadwal.show', $jadwal)
+                ->with(
+                    'error',
+                    'Jadwal yang sudah disetujui tidak dapat diubah.'
+                );
+        }
+
+        $jadwal->load([
+            'details' => function ($query) {
+                $query
+                    ->orderBy('tgl_mulai')
+                    ->orderBy('jam_mulai');
+            },
+            'details.posyandu',
+            'details.kegiatan',
+        ]);
+
+        $posyandus = Posyandu::query()
+            ->where('aktif', true)
+            ->with([
+                'wilayah',
+                'hariOperasionals' => function ($query) {
+                    $query
+                        ->where('aktif', true)
+                        ->orderBy('hari')
+                        ->orderBy('jam_mulai');
+                },
+            ])
+            ->orderBy('nama_posyandu')
+            ->get();
+
+        $kegiatans = Kegiatan::query()
+            ->where('aktif', true)
+            ->orderBy('nama_kegiatan')
+            ->get();
+
+        return view(
+            'pages.jadwal.edit',
+            compact(
+                'jadwal',
+                'posyandus',
+                'kegiatans'
+            )
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
+
+    public function update(
+        Request $request,
+        JadwalBulanan $jadwal
+    ) {
+        if ($jadwal->status === 'disetujui') {
+            return back()->with(
+                'error',
+                'Jadwal yang sudah disetujui tidak dapat diubah.'
+            );
+        }
+
+        $validated = $request->validate([
+            'catatan' => [
+                'nullable',
+                'string',
+            ],
+
+            'details' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'details.*.id' => [
+                'nullable',
+                'integer',
+                'exists:jadwal_details,id',
+            ],
+
+            'details.*.posyandu_id' => [
+                'required',
+                'integer',
+                'exists:posyandus,id',
+            ],
+
+            'details.*.kegiatan_id' => [
+                'required',
+                'integer',
+                'exists:kegiatans,id',
+            ],
+
+            'details.*.tgl_mulai' => [
+                'required',
+                'date',
+            ],
+
+            'details.*.tgl_selesai' => [
+                'required',
+                'date',
+            ],
+
+            'details.*.jam_mulai' => [
+                'required',
+                'date_format:H:i',
+            ],
+
+            'details.*.jam_selesai' => [
+                'required',
+                'date_format:H:i',
+            ],
+
+            'details.*.keterangan' => [
+                'nullable',
+                'string',
+            ],
+        ]);
+
+        $this->validateDetailDates(
+            $validated['details'],
+            $jadwal->bulan,
+            $jadwal->tahun
+        );
+
+        $this->validateDetailTimes(
+            $validated['details']
+        );
+
+        $this->validateScheduleConflicts(
+            $validated['details']
         );
 
         DB::transaction(function () use (
             $jadwal,
-            $validated,
-            $details
+            $validated
         ) {
             $jadwal->update([
                 'catatan' => $validated['catatan'] ?? null,
@@ -277,9 +385,10 @@ class JadwalBulananController extends Controller
 
             $existingIds = [];
 
-            foreach ($details as $detail) {
+            foreach ($validated['details'] as $detail) {
                 if (!empty($detail['id'])) {
-                    $jadwalDetail = JadwalDetail::where('jadwal_id', $jadwal->id)
+                    $jadwalDetail = JadwalDetail::query()
+                        ->where('jadwal_id', $jadwal->id)
                         ->where('id', $detail['id'])
                         ->firstOrFail();
 
@@ -288,10 +397,8 @@ class JadwalBulananController extends Controller
                         'kegiatan_id' => $detail['kegiatan_id'],
                         'tgl_mulai' => $detail['tgl_mulai'],
                         'tgl_selesai' => $detail['tgl_selesai'],
-                        'jam_mulai' => $detail['jam_mulai'] ?? null,
-                        'jam_selesai' => $detail['jam_selesai'] ?? null,
-                        'tipe_kegiatan' => $detail['tipe_kegiatan'],
-                        'status' => $detail['status'] ?? 'terjadwal',
+                        'jam_mulai' => $detail['jam_mulai'],
+                        'jam_selesai' => $detail['jam_selesai'],
                         'keterangan' => $detail['keterangan'] ?? null,
                     ]);
 
@@ -302,10 +409,8 @@ class JadwalBulananController extends Controller
                         'kegiatan_id' => $detail['kegiatan_id'],
                         'tgl_mulai' => $detail['tgl_mulai'],
                         'tgl_selesai' => $detail['tgl_selesai'],
-                        'jam_mulai' => $detail['jam_mulai'] ?? null,
-                        'jam_selesai' => $detail['jam_selesai'] ?? null,
-                        'tipe_kegiatan' => $detail['tipe_kegiatan'],
-                        'status' => $detail['status'] ?? 'terjadwal',
+                        'jam_mulai' => $detail['jam_mulai'],
+                        'jam_selesai' => $detail['jam_selesai'],
                         'keterangan' => $detail['keterangan'] ?? null,
                     ]);
 
@@ -313,115 +418,106 @@ class JadwalBulananController extends Controller
                 }
             }
 
-            $query = $jadwal->details();
+            $deleteQuery = $jadwal->details();
 
             if (count($existingIds) > 0) {
-                $query->whereNotIn('id', $existingIds);
+                $deleteQuery->whereNotIn(
+                    'id',
+                    $existingIds
+                );
             }
 
-            $query->delete();
+            $deleteQuery->delete();
         });
 
         return redirect()
             ->route('jadwal.edit', $jadwal)
             ->with(
                 'success',
-                'Jadwal berhasil disimpan.'
+                'Jadwal berhasil diperbarui.'
             );
     }
 
-    public function destroy(JadwalBulanan $jadwal)
-    {
-        if (!in_array($jadwal->status, ['draft', 'ditolak'])) {
-            return back()->with(
-                'error',
-                'Jadwal hanya dapat dihapus ketika berstatus draft atau ditolak.'
-            );
-        }
-
-        $jadwal->delete();
-
-        return redirect()
-            ->route('jadwal.index')
-            ->with(
-                'success',
-                'Jadwal berhasil dihapus.'
-            );
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | GENERATE SEMUA POSYANDU
+    |--------------------------------------------------------------------------
+    */
 
     public function generate(JadwalBulanan $jadwal)
     {
-        if (!in_array($jadwal->status, ['draft', 'ditolak'])) {
+        if ($jadwal->status === 'disetujui') {
             return back()->with(
                 'error',
-                'Jadwal tidak dapat digenerate pada status saat ini.'
+                'Jadwal yang sudah disetujui tidak dapat digenerate ulang.'
             );
         }
 
-        $hariOperasionals = HariOperasional::where('aktif', true)
-            ->with('posyandu')
-            ->get()
-            ->groupBy('hari');
-
-        $kegiatans = Kegiatan::where('aktif', true)
-            ->orderBy('id')
+        $posyandus = Posyandu::query()
+            ->where('aktif', true)
+            ->with([
+                'hariOperasionals' => function ($query) {
+                    $query
+                        ->where('aktif', true)
+                        ->orderBy('hari')
+                        ->orderBy('jam_mulai');
+                },
+            ])
             ->get();
 
-        if ($kegiatans->isEmpty()) {
+        $kegiatanDefault = Kegiatan::query()
+            ->where('aktif', true)
+            ->orderBy('id')
+            ->first();
+
+        if (!$kegiatanDefault) {
             return back()->with(
                 'error',
-                'Belum ada kegiatan aktif yang dapat digunakan.'
+                'Belum ada master kegiatan aktif.'
             );
         }
-
-        $startDate = Carbon::create(
-            $jadwal->tahun,
-            $jadwal->bulan,
-            1
-        )->startOfMonth();
-
-        $endDate = $startDate->copy()->endOfMonth();
 
         DB::transaction(function () use (
             $jadwal,
-            $hariOperasionals,
-            $kegiatans,
-            $startDate,
-            $endDate
+            $posyandus,
+            $kegiatanDefault
         ) {
-            $jadwal->details()->delete();
+            foreach ($posyandus as $posyandu) {
+                $hariOperasional = $posyandu
+                    ->hariOperasionals
+                    ->first();
 
-            $currentDate = $startDate->copy();
-
-            while ($currentDate->lte($endDate)) {
-                $hari = $currentDate->dayOfWeekIso;
-
-                $operasionals = $hariOperasionals->get(
-                    $hari,
-                    collect()
-                );
-
-                foreach ($operasionals as $operasional) {
-                    $kegiatan = $kegiatans->first();
-
-                    if (!$kegiatan) {
-                        continue;
-                    }
-
-                    $jadwal->details()->create([
-                        'posyandu_id' => $operasional->posyandu_id,
-                        'kegiatan_id' => $kegiatan->id,
-                        'tgl_mulai' => $currentDate->toDateString(),
-                        'tgl_selesai' => $currentDate->toDateString(),
-                        'jam_mulai' => $operasional->jam_mulai,
-                        'jam_selesai' => $operasional->jam_selesai,
-                        'tipe_kegiatan' => 'DG',
-                        'status' => 'terjadwal',
-                        'keterangan' => null,
-                    ]);
+                if (!$hariOperasional) {
+                    continue;
                 }
 
-                $currentDate->addDay();
+                $tanggal = $this->tanggalPertamaSesuaiHari(
+                    $jadwal->tahun,
+                    $jadwal->bulan,
+                    $hariOperasional->hari
+                );
+
+                if (!$tanggal) {
+                    continue;
+                }
+
+                $alreadyExists = $jadwal->details()
+                    ->where('posyandu_id', $posyandu->id)
+                    ->exists();
+
+                if ($alreadyExists) {
+                    continue;
+                }
+
+                $jadwal->details()->create([
+                    'posyandu_id' => $posyandu->id,
+                    'kegiatan_id' => $kegiatanDefault->id,
+                    'tgl_mulai' => $tanggal,
+                    'tgl_selesai' => $tanggal,
+                    'jam_mulai' => $hariOperasional->jam_mulai,
+                    'jam_selesai' => $hariOperasional->jam_selesai,
+                    'keterangan' => null,
+                ]);
             }
         });
 
@@ -429,15 +525,157 @@ class JadwalBulananController extends Controller
             ->route('jadwal.edit', $jadwal)
             ->with(
                 'success',
-                'Jadwal berhasil digenerate berdasarkan hari operasional.'
+                'Jadwal semua Posyandu berhasil digenerate.'
             );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GENERATE SATU POSYANDU
+    |--------------------------------------------------------------------------
+    */
+
+    public function generateOne(
+        Request $request,
+        JadwalBulanan $jadwal
+    ) {
+        if ($jadwal->status === 'disetujui') {
+            return back()->with(
+                'error',
+                'Jadwal yang sudah disetujui tidak dapat digenerate.'
+            );
+        }
+
+        $validated = $request->validate([
+            'posyandu_id' => [
+                'required',
+                'integer',
+                'exists:posyandus,id',
+            ],
+        ]);
+
+        $posyandu = Posyandu::query()
+            ->where('aktif', true)
+            ->with([
+                'hariOperasionals' => function ($query) {
+                    $query
+                        ->where('aktif', true)
+                        ->orderBy('hari')
+                        ->orderBy('jam_mulai');
+                },
+            ])
+            ->findOrFail(
+                $validated['posyandu_id']
+            );
+
+        $kegiatanDefault = Kegiatan::query()
+            ->where('aktif', true)
+            ->orderBy('id')
+            ->first();
+
+        if (!$kegiatanDefault) {
+            return back()->with(
+                'error',
+                'Belum ada master kegiatan aktif.'
+            );
+        }
+
+        $hariOperasional = $posyandu
+            ->hariOperasionals
+            ->first();
+
+        if (!$hariOperasional) {
+            return back()->with(
+                'error',
+                'Posyandu tersebut belum memiliki hari operasional.'
+            );
+        }
+
+        $tanggal = $this->tanggalPertamaSesuaiHari(
+            $jadwal->tahun,
+            $jadwal->bulan,
+            $hariOperasional->hari
+        );
+
+        if (!$tanggal) {
+            return back()->with(
+                'error',
+                'Tanggal operasional tidak ditemukan.'
+            );
+        }
+
+        $jadwal->details()->updateOrCreate(
+            [
+                'posyandu_id' => $posyandu->id,
+            ],
+            [
+                'kegiatan_id' => $kegiatanDefault->id,
+                'tgl_mulai' => $tanggal,
+                'tgl_selesai' => $tanggal,
+                'jam_mulai' => $hariOperasional->jam_mulai,
+                'jam_selesai' => $hariOperasional->jam_selesai,
+                'keterangan' => null,
+            ]
+        );
+
+        return redirect()
+            ->route('jadwal.edit', $jadwal)
+            ->with(
+                'success',
+                'Jadwal satu Posyandu berhasil digenerate.'
+            );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| DESTROY / HAPUS JADWAL
+|--------------------------------------------------------------------------
+*/
+
+public function destroy(JadwalBulanan $jadwal)
+{
+    /*
+     * Jadwal yang sudah disetujui tidak boleh dihapus.
+     */
+    if ($jadwal->status === 'disetujui') {
+        return redirect()
+            ->route('jadwal.index')
+            ->with(
+                'error',
+                'Jadwal yang sudah disetujui tidak dapat dihapus.'
+            );
+    }
+
+    DB::transaction(function () use ($jadwal) {
+        /*
+         * Hapus seluruh detail jadwal terlebih dahulu.
+         */
+        $jadwal->details()->delete();
+
+        /*
+         * Setelah detail terhapus, hapus jadwal induknya.
+         */
+        $jadwal->delete();
+    });
+
+    return redirect()
+        ->route('jadwal.index')
+        ->with(
+            'success',
+            'Jadwal bulanan berhasil dihapus.'
+        );
+}
+    /*
+    |--------------------------------------------------------------------------
+    | PDF SEMUA JADWAL
+    |--------------------------------------------------------------------------
+    */
 
     public function pdf(JadwalBulanan $jadwal)
     {
         $jadwal->load([
-            'dibuatOleh',
-            'approvedBy',
+            'pembuat',
+            'approver',
             'details' => function ($query) {
                 $query
                     ->orderBy('tgl_mulai')
@@ -452,178 +690,240 @@ class JadwalBulananController extends Controller
             compact('jadwal')
         );
 
-        $pdf->setPaper('a4', 'landscape');
-
-        $filename = sprintf(
-            'jadwal-posyandu-%d-%02d.pdf',
-            $jadwal->tahun,
-            $jadwal->bulan
+        $pdf->setPaper(
+            'a4',
+            'landscape'
         );
 
-        return $pdf->download($filename);
-    }
-
-    public function excel(JadwalBulanan $jadwal)
-    {
-        $filename = sprintf(
-            'jadwal-posyandu-%d-%02d.xlsx',
-            $jadwal->tahun,
-            $jadwal->bulan
-        );
-
-        return Excel::download(
-            new JadwalBulananExport($jadwal),
-            $filename
+        return $pdf->download(
+            'jadwal-posyandu-' .
+            $jadwal->tahun .
+            '-' .
+            str_pad(
+                $jadwal->bulan,
+                2,
+                '0',
+                STR_PAD_LEFT
+            ) .
+            '.pdf'
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PDF SATU POSYANDU
+    |--------------------------------------------------------------------------
+    */
+
+    public function pdfOne(
+        JadwalBulanan $jadwal,
+        Posyandu $posyandu
+    ) {
+        $jadwal->load([
+            'pembuat',
+            'details' => function ($query) use ($posyandu) {
+                $query
+                    ->where('posyandu_id', $posyandu->id)
+                    ->orderBy('tgl_mulai')
+                    ->orderBy('jam_mulai');
+            },
+            'details.posyandu.wilayah',
+            'details.kegiatan',
+        ]);
+
+        $pdf = Pdf::loadView(
+            'pages.jadwal.pdf',
+            compact(
+                'jadwal',
+                'posyandu'
+            )
+        );
+
+        $pdf->setPaper(
+            'a4',
+            'landscape'
+        );
+
+        return $pdf->download(
+            'jadwal-' .
+            \Str::slug($posyandu->nama_posyandu) .
+            '-' .
+            $jadwal->tahun .
+            '-' .
+            str_pad(
+                $jadwal->bulan,
+                2,
+                '0',
+                STR_PAD_LEFT
+            ) .
+            '.pdf'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HELPER TANGGAL
+    |--------------------------------------------------------------------------
+    */
+
+    private function tanggalPertamaSesuaiHari(
+        int $tahun,
+        int $bulan,
+        $hari
+    ) {
+        $tanggal = Carbon::create(
+            $tahun,
+            $bulan,
+            1
+        );
+
+        /*
+         * Nilai hari:
+         * 1 = Senin
+         * 2 = Selasa
+         * 3 = Rabu
+         * 4 = Kamis
+         * 5 = Jumat
+         * 6 = Sabtu
+         * 7 = Minggu
+         */
+
+        $hariTarget = (int) $hari;
+
+        if (
+            $hariTarget < 1 ||
+            $hariTarget > 7
+        ) {
+            return null;
+        }
+
+        while (
+            (int) $tanggal->dayOfWeekIso !== $hariTarget
+        ) {
+            $tanggal->addDay();
+
+            if ($tanggal->month !== $bulan) {
+                return null;
+            }
+        }
+
+        return $tanggal->format('Y-m-d');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDASI TANGGAL DETAIL
+    |--------------------------------------------------------------------------
+    */
 
     private function validateDetailDates(
         array $details,
-        JadwalBulanan $jadwal
-    ): void {
-        $startDate = Carbon::create(
-            $jadwal->tahun,
-            $jadwal->bulan,
-            1
-        )->startOfMonth();
+        int $bulan,
+        int $tahun
+    ) {
+        foreach ($details as $detail) {
+            $mulai = Carbon::parse(
+                $detail['tgl_mulai']
+            );
 
-        $endDate = $startDate->copy()->endOfMonth();
+            $selesai = Carbon::parse(
+                $detail['tgl_selesai']
+            );
 
-        foreach ($details as $index => $detail) {
-            $mulai = Carbon::parse($detail['tgl_mulai']);
-            $selesai = Carbon::parse($detail['tgl_selesai']);
-
-            if ($mulai->lt($startDate) || $mulai->gt($endDate)) {
+            if (
+                $mulai->month !== $bulan ||
+                $mulai->year !== $tahun
+            ) {
                 throw ValidationException::withMessages([
-                    "details.$index.tgl_mulai" =>
-                        'Tanggal kegiatan harus berada di bulan jadwal.',
+                    'details' =>
+                        'Tanggal mulai harus berada pada bulan jadwal.',
                 ]);
             }
 
-            if ($selesai->lt($startDate) || $selesai->gt($endDate)) {
+            if (
+                $selesai->month !== $bulan ||
+                $selesai->year !== $tahun
+            ) {
                 throw ValidationException::withMessages([
-                    "details.$index.tgl_selesai" =>
-                        'Tanggal kegiatan harus berada di bulan jadwal.',
+                    'details' =>
+                        'Tanggal selesai harus berada pada bulan jadwal.',
                 ]);
             }
 
             if ($selesai->lt($mulai)) {
                 throw ValidationException::withMessages([
-                    "details.$index.tgl_selesai" =>
+                    'details' =>
                         'Tanggal selesai tidak boleh sebelum tanggal mulai.',
                 ]);
             }
         }
     }
 
-    private function validateDetailTimes(array $details): void
-    {
-        foreach ($details as $index => $detail) {
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDASI JAM DETAIL
+    |--------------------------------------------------------------------------
+    */
+
+    private function validateDetailTimes(
+        array $details
+    ) {
+        foreach ($details as $detail) {
             if (
-                !empty($detail['jam_mulai']) &&
-                !empty($detail['jam_selesai'])
+                $detail['jam_selesai'] <=
+                $detail['jam_mulai']
             ) {
-                if (
-                    $detail['jam_selesai'] <=
-                    $detail['jam_mulai']
-                ) {
-                    throw ValidationException::withMessages([
-                        "details.$index.jam_selesai" =>
-                            'Jam selesai harus lebih besar dari jam mulai.',
-                    ]);
-                }
+                throw ValidationException::withMessages([
+                    'details' =>
+                        'Jam selesai harus lebih besar dari jam mulai.',
+                ]);
             }
         }
     }
 
-    private function validateScheduleConflicts(array $details): void
-    {
-        $count = count($details);
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDASI BENTROK JADWAL
+    |--------------------------------------------------------------------------
+    */
 
-        for ($i = 0; $i < $count; $i++) {
-            for ($j = $i + 1; $j < $count; $j++) {
-                $a = $details[$i];
-                $b = $details[$j];
+    private function validateScheduleConflicts(
+        array $details
+    ) {
+        $grouped = collect($details)
+            ->groupBy(function ($detail) {
+                return $detail['posyandu_id'] .
+                    '|' .
+                    $detail['tgl_mulai'];
+            });
+
+        foreach ($grouped as $items) {
+            if ($items->count() <= 1) {
+                continue;
+            }
+
+            $sorted = $items
+                ->sortBy('jam_mulai')
+                ->values();
+
+            for (
+                $i = 0;
+                $i < $sorted->count() - 1;
+                $i++
+            ) {
+                $current = $sorted[$i];
+                $next = $sorted[$i + 1];
 
                 if (
-                    (int) $a['posyandu_id'] !==
-                    (int) $b['posyandu_id']
-                ) {
-                    continue;
-                }
-
-                $aStart = Carbon::parse($a['tgl_mulai']);
-                $aEnd = Carbon::parse($a['tgl_selesai']);
-
-                $bStart = Carbon::parse($b['tgl_mulai']);
-                $bEnd = Carbon::parse($b['tgl_selesai']);
-
-                $dateOverlap =
-                    $aStart->lte($bEnd) &&
-                    $bStart->lte($aEnd);
-
-                if (!$dateOverlap) {
-                    continue;
-                }
-
-                if (
-                    empty($a['jam_mulai']) ||
-                    empty($a['jam_selesai']) ||
-                    empty($b['jam_mulai']) ||
-                    empty($b['jam_selesai'])
+                    $next['jam_mulai'] <
+                    $current['jam_selesai']
                 ) {
                     throw ValidationException::withMessages([
                         'details' =>
-                            'Terdapat jadwal yang berpotensi bentrok pada Posyandu yang sama. Pastikan tanggal dan jam kegiatan sudah diatur.',
-                    ]);
-                }
-
-                $aStartTime = Carbon::createFromFormat(
-                    'H:i',
-                    $a['jam_mulai']
-                );
-
-                $aEndTime = Carbon::createFromFormat(
-                    'H:i',
-                    $a['jam_selesai']
-                );
-
-                $bStartTime = Carbon::createFromFormat(
-                    'H:i',
-                    $b['jam_mulai']
-                );
-
-                $bEndTime = Carbon::createFromFormat(
-                    'H:i',
-                    $b['jam_selesai']
-                );
-
-                $timeOverlap =
-                    $aStartTime->lt($bEndTime) &&
-                    $bStartTime->lt($aEndTime);
-
-                if ($timeOverlap) {
-                    throw ValidationException::withMessages([
-                        'details' =>
-                            'Terdapat jadwal bentrok pada Posyandu yang sama. Silakan periksa kembali tanggal dan jam kegiatan.',
+                            'Terdapat jadwal bentrok pada Posyandu yang sama.',
                     ]);
                 }
             }
         }
-    }
-
-    private function createStatusLog(
-        JadwalBulanan $jadwal,
-        ?string $statusLama,
-        string $statusBaru,
-        ?string $keterangan = null
-    ): void {
-        $jadwal->statusLogs()->create([
-            'user_id' => auth()->id(),
-            'status_lama' => $statusLama,
-            'status_baru' => $statusBaru,
-            'keterangan' => $keterangan,
-            'created_at' => now(),
-        ]);
     }
 }

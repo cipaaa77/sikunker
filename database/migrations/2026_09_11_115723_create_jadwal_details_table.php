@@ -11,72 +11,32 @@ return new class extends Migration
         Schema::create('jadwal_details', function (Blueprint $table) {
             $table->id();
 
-            /*
-             * Header jadwal bulanan
-             */
             $table->foreignId('jadwal_id')
                 ->constrained('jadwal_bulanans')
+                ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
-            /*
-             * Posyandu
-             */
             $table->foreignId('posyandu_id')
                 ->constrained('posyandus')
+                ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
-            /*
-             * Kegiatan
-             */
             $table->foreignId('kegiatan_id')
                 ->constrained('kegiatans')
+                ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
-            /*
-             * Tanggal kegiatan
-             */
             $table->date('tgl_mulai');
+
             $table->date('tgl_selesai');
 
-            /*
-             * Jam kegiatan
-             */
-            $table->time('jam_mulai')->nullable();
-            $table->time('jam_selesai')->nullable();
+            $table->time('jam_mulai');
 
-            /*
-             * DG = Dalam Gedung
-             * LG = Luar Gedung
-             */
-            $table->enum('tipe_kegiatan', [
-                'DG',
-                'LG'
-            ])->default('DG');
-
-            /*
-             * Status pelaksanaan
-             */
-            $table->enum('status', [
-                'terjadwal',
-                'selesai',
-                'dibatalkan'
-            ])->default('terjadwal');
+            $table->time('jam_selesai');
 
             $table->text('keterangan')->nullable();
 
             $table->timestamps();
-
-            /*
-             * Index untuk pencarian dan
-             * conflict detection
-             */
-            $table->index('jadwal_id');
-            $table->index('posyandu_id');
-            $table->index('kegiatan_id');
-            $table->index('tgl_mulai');
-            $table->index('tgl_selesai');
-            $table->index('status');
-            $table->index('tipe_kegiatan');
         });
     }
 

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class JadwalDetail extends Model
 {
     use HasFactory;
+
+    protected $table = 'jadwal_details';
 
     protected $fillable = [
         'jadwal_id',
@@ -18,9 +19,8 @@ class JadwalDetail extends Model
         'tgl_selesai',
         'jam_mulai',
         'jam_selesai',
-        'tipe_kegiatan',
-        'status',
         'keterangan',
+        'status',
     ];
 
     protected $casts = [
@@ -28,7 +28,7 @@ class JadwalDetail extends Model
         'tgl_selesai' => 'date',
     ];
 
-    public function jadwal(): BelongsTo
+    public function jadwal()
     {
         return $this->belongsTo(
             JadwalBulanan::class,
@@ -36,13 +36,19 @@ class JadwalDetail extends Model
         );
     }
 
-    public function posyandu(): BelongsTo
+    public function posyandu()
     {
-        return $this->belongsTo(Posyandu::class);
+        return $this->belongsTo(
+            Posyandu::class,
+            'posyandu_id'
+        );
     }
 
-    public function kegiatan(): BelongsTo
+    public function kegiatan()
     {
-        return $this->belongsTo(Kegiatan::class);
+        return $this->belongsTo(
+            Kegiatan::class,
+            'kegiatan_id'
+        );
     }
 }

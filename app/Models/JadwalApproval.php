@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class JadwalApproval extends Model
 {
     use HasFactory;
+
+    protected $table = 'jadwal_approvals';
 
     protected $fillable = [
         'jadwal_id',
@@ -22,7 +23,7 @@ class JadwalApproval extends Model
         'approved_at' => 'datetime',
     ];
 
-    public function jadwal(): BelongsTo
+    public function jadwal()
     {
         return $this->belongsTo(
             JadwalBulanan::class,
@@ -30,8 +31,11 @@ class JadwalApproval extends Model
         );
     }
 
-    public function user(): BelongsTo
+    public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            User::class,
+            'user_id'
+        );
     }
 }

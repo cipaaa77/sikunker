@@ -2,210 +2,547 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Akd;
 use App\Models\JadwalBulanan;
 use App\Models\JadwalDetail;
+use App\Models\Posyandu;
 use App\Models\Kegiatan;
+use App\Models\HariOperasional;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class JadwalController extends Controller
+class JadwalBulananController extends Controller
 {
+    /**
+     * Menampilkan daftar jadwal bulanan.
+     */
     public function index()
     {
-        $jadwals = JadwalBulanan::with(['user', 'approver'])
-            ->orderBy('tahun', 'desc')
-            ->orderBy('bulan', 'desc')
+        $jadwals = JadwalBulanan::with([
+                'dibuatOleh',
+                'approvedBy',
+            ])
+            ->orderByDesc('tahun')
+            ->orderByDesc('bulan')
             ->paginate(10);
 
         return view('pages.jadwal.index', compact('jadwals'));
     }
 
+    /**
+     * Halaman membuat jadwal.
+     *
+     * Pada tahap ini belum ada data yang disimpan ke database.
+     * Data jadwal baru disimpan ketika tombol Simpan ditekan.
+     */
     public function create()
     {
-        $akds = Akd::all();
-        $kegiatans = Kegiatan::all();
-        return view('pages.jadwal.create', compact('akds', 'kegiatans'));
+        $posyandus = Posyandu::with('wilayah')
+            ->where('aktif', true)
+            ->orderBy('nama_posyandu')
+            ->get();
+
+        $kegiatans = Kegiatan::where('aktif', true)
+            ->orderBy('nama_kegiatan')
+            ->get();
+
+        $hariOperasionals = HariOperasional::with('posyandu')
+            ->where('aktif', true)
+            ->get();
+
+        return view('pages.jadwal.create', compact(
+            'posyandus',
+            'kegiatans',
+            'hariOperasionals'
+        ));
     }
 
-    public function edit($id)
-    {
-        $jadwal = JadwalBulanan::with('details.akd')->findOrFail($id);
-
-        // Sesuai Flowchart: Hanya jadwal 'ditolak' yang bisa direvisi oleh Admin
-        if ($jadwal->status !== 'ditolak') {
-            return redirect()->route('admin.jadwal.index')
-                ->with('error', 'Hanya jadwal dengan status ditolak yang dapat direvisi.');
-        }
-
-        $akds = Akd::all();
-        return view('pages.jadwal.edit', compact('jadwal', 'akds'));
-    }
-
+    /**
+     * Menyimpan jadwal bulanan beserta detailnya.
+     */
     public function store(Request $request)
     {
-        $this->validateRequest($request);
-        $error = $this->checkBusinessRules($request);
-        if ($error) return back()->with('error', $error)->withInput();
+        $validated = $request->validate([
+            'bulan' => [
+                'required',
+                'integer',
+                'between:1,12',
+            ],
 
-        DB::transaction(function () use ($request) {
+            'tahun' => [
+                'required',
+                'integer',
+                'min:2020',
+                'max:2100',
+            ],
+
+            'catatan' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+
+            'details' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'details.*.posyandu_id' => [
+                'required',
+                'exists:posyandus,id',
+            ],
+
+            'details.*.kegiatan_id' => [
+                'required',
+                'exists:kegiatans,id',
+            ],
+
+            'details.*.tgl_mulai' => [
+                'required',
+                'date',
+            ],
+
+            'details.*.tgl_selesai' => [
+                'required',
+                'date',
+                'after_or_equal:details.*.tgl_mulai',
+            ],
+
+            'details.*.jam_mulai' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+
+            'details.*.jam_selesai' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+
+            'details.*.keterangan' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+        ], [
+            'details.required' => 'Minimal harus ada satu detail jadwal.',
+            'details.min' => 'Minimal harus ada satu detail jadwal.',
+            'details.*.posyandu_id.required' => 'Posyandu wajib dipilih.',
+            'details.*.kegiatan_id.required' => 'Kegiatan wajib dipilih.',
+            'details.*.tgl_mulai.required' => 'Tanggal mulai wajib diisi.',
+            'details.*.tgl_selesai.required' => 'Tanggal selesai wajib diisi.',
+            'details.*.tgl_selesai.after_or_equal' =>
+                'Tanggal selesai harus sama atau setelah tanggal mulai.',
+        ]);
+
+        $bulan = (int) $validated['bulan'];
+        $tahun = (int) $validated['tahun'];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validasi periode jadwal
+        |--------------------------------------------------------------------------
+        */
+
+        $periodeSudahAda = JadwalBulanan::where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->exists();
+
+        if ($periodeSudahAda) {
+            return back()
+                ->withInput()
+                ->with('error', 'Jadwal untuk bulan dan tahun tersebut sudah tersedia.');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validasi tanggal harus sesuai dengan bulan dan tahun jadwal
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($validated['details'] as $index => $detail) {
+            $tanggalMulai = Carbon::parse($detail['tgl_mulai']);
+            $tanggalSelesai = Carbon::parse($detail['tgl_selesai']);
+
+            if (
+                $tanggalMulai->month !== $bulan ||
+                $tanggalMulai->year !== $tahun ||
+                $tanggalSelesai->month !== $bulan ||
+                $tanggalSelesai->year !== $tahun
+            ) {
+                return back()
+                    ->withInput()
+                    ->with(
+                        'error',
+                        'Tanggal pada detail ke-' . ($index + 1) .
+                        ' harus berada pada bulan dan tahun jadwal yang dipilih.'
+                    );
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan header dan detail dalam satu transaksi
+        |--------------------------------------------------------------------------
+        */
+
+        DB::transaction(function () use ($validated, $bulan, $tahun) {
             $jadwal = JadwalBulanan::create([
-                'bulan' => $request->bulan,
-                'tahun' => $request->tahun,
+                'bulan' => $bulan,
+                'tahun' => $tahun,
+                'status' => 'draft',
+                'catatan' => $validated['catatan'] ?? null,
                 'dibuat_oleh' => auth()->id(),
-                'status' => 'draft'
             ]);
 
-            foreach ($request->details as $detail) {
-                // Pastikan array ini memiliki key yang sesuai dengan kolom tabel jadwal_details
+            foreach ($validated['details'] as $detail) {
                 $jadwal->details()->create([
-                    'akd_id'      => $detail['akd_id'] ?: null, // Simpan null jika kosong
+                    'posyandu_id' => $detail['posyandu_id'],
                     'kegiatan_id' => $detail['kegiatan_id'],
-                    'tipe_kunjungan' => $detail['tipe_kunjungan'],
-                    'tujuan'      => $detail['tujuan'],
-                    'tgl_mulai'   => $detail['tgl_mulai'],
+                    'tgl_mulai' => $detail['tgl_mulai'],
                     'tgl_selesai' => $detail['tgl_selesai'],
+                    'jam_mulai' => $detail['jam_mulai'] ?? null,
+                    'jam_selesai' => $detail['jam_selesai'] ?? null,
+                    'keterangan' => $detail['keterangan'] ?? null,
                 ]);
             }
         });
 
-        return redirect()->route('admin.jadwal.index')->with('success', 'Jadwal berhasil dibuat secara otomatis.');
+        return redirect()
+            ->route('jadwal.index')
+            ->with('success', 'Jadwal bulanan berhasil disimpan.');
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Menampilkan detail jadwal.
+     */
+    public function show(JadwalBulanan $jadwal)
     {
-        $jadwal = JadwalBulanan::findOrFail($id);
-        $this->validateRequest($request);
+        $jadwal->load([
+            'dibuatOleh',
+            'approvedBy',
+            'details.posyandu.wilayah',
+            'details.kegiatan',
+            'approvals.user',
+            'statusLogs.user',
+        ]);
 
-        // Aturan Bisnis: Cek Kuota & Bentrok (Kecuali ID jadwal ini sendiri)
-        $error = $this->checkBusinessRules($request, $id);
-        if ($error) return back()->with('error', $error)->withInput();
-
-        DB::transaction(function () use ($request, $jadwal) {
-            // Reset status ke Draft dan hapus catatan lama
-            $jadwal->update([
-                'bulan' => $request->bulan,
-                'tahun' => $request->tahun,
-                'status' => 'draft',
-                'catatan_banmus' => null
-            ]);
-
-            // Hapus detail lama dan masukkan hasil revisi
-            $jadwal->details()->delete();
-            foreach ($request->details as $detail) {
-                $jadwal->details()->create($detail);
-            }
-        });
-
-        return redirect()->route('admin.jadwal.index')->with('success', 'Jadwal berhasil direvisi dan diajukan kembali.');
-    }
-
-    public function show($id)
-    {
-        $jadwal = JadwalBulanan::with(['details.akd', 'user', 'approver', 'details.kegiatanDetail'])->findOrFail($id);
         return view('pages.jadwal.show', compact('jadwal'));
     }
 
-    public function approve(Request $request, $id)
+    /**
+     * Halaman edit jadwal.
+     */
+    public function edit(JadwalBulanan $jadwal)
     {
-        $jadwal = JadwalBulanan::findOrFail($id);
-
-        if (auth()->user()->role !== 'bamus') {
-            abort(403);
+        if (!in_array($jadwal->status, ['draft', 'ditolak'])) {
+            return redirect()
+                ->route('jadwal.index')
+                ->with(
+                    'error',
+                    'Jadwal dengan status tersebut tidak dapat diubah.'
+                );
         }
 
-        $status = $request->status; // 'disetujui' atau 'ditolak'
+        $jadwal->load([
+            'details.posyandu.wilayah',
+            'details.kegiatan',
+        ]);
+
+        $posyandus = Posyandu::with('wilayah')
+            ->where('aktif', true)
+            ->orderBy('nama_posyandu')
+            ->get();
+
+        $kegiatans = Kegiatan::where('aktif', true)
+            ->orderBy('nama_kegiatan')
+            ->get();
+
+        $hariOperasionals = HariOperasional::with('posyandu')
+            ->where('aktif', true)
+            ->get();
+
+        return view('pages.jadwal.edit', compact(
+            'jadwal',
+            'posyandus',
+            'kegiatans',
+            'hariOperasionals'
+        ));
+    }
+
+    /**
+     * Memperbarui jadwal bulanan.
+     */
+    public function update(Request $request, JadwalBulanan $jadwal)
+    {
+        if (!in_array($jadwal->status, ['draft', 'ditolak'])) {
+            return redirect()
+                ->route('jadwal.index')
+                ->with(
+                    'error',
+                    'Jadwal dengan status tersebut tidak dapat diubah.'
+                );
+        }
+
+        $validated = $request->validate([
+            'bulan' => [
+                'required',
+                'integer',
+                'between:1,12',
+            ],
+
+            'tahun' => [
+                'required',
+                'integer',
+                'min:2020',
+                'max:2100',
+            ],
+
+            'catatan' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+
+            'details' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'details.*.id' => [
+                'nullable',
+                'integer',
+                'exists:jadwal_details,id',
+            ],
+
+            'details.*.posyandu_id' => [
+                'required',
+                'exists:posyandus,id',
+            ],
+
+            'details.*.kegiatan_id' => [
+                'required',
+                'exists:kegiatans,id',
+            ],
+
+            'details.*.tgl_mulai' => [
+                'required',
+                'date',
+            ],
+
+            'details.*.tgl_selesai' => [
+                'required',
+                'date',
+                'after_or_equal:details.*.tgl_mulai',
+            ],
+
+            'details.*.jam_mulai' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+
+            'details.*.jam_selesai' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+
+            'details.*.keterangan' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+        ]);
+
+        $bulan = (int) $validated['bulan'];
+        $tahun = (int) $validated['tahun'];
+
+        $periodeSudahAda = JadwalBulanan::where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->where('id', '!=', $jadwal->id)
+            ->exists();
+
+        if ($periodeSudahAda) {
+            return back()
+                ->withInput()
+                ->with('error', 'Jadwal untuk bulan dan tahun tersebut sudah tersedia.');
+        }
+
+        foreach ($validated['details'] as $index => $detail) {
+            $tanggalMulai = Carbon::parse($detail['tgl_mulai']);
+            $tanggalSelesai = Carbon::parse($detail['tgl_selesai']);
+
+            if (
+                $tanggalMulai->month !== $bulan ||
+                $tanggalMulai->year !== $tahun ||
+                $tanggalSelesai->month !== $bulan ||
+                $tanggalSelesai->year !== $tahun
+            ) {
+                return back()
+                    ->withInput()
+                    ->with(
+                        'error',
+                        'Tanggal pada detail ke-' . ($index + 1) .
+                        ' harus sesuai dengan bulan dan tahun jadwal.'
+                    );
+            }
+        }
+
+        DB::transaction(function () use ($validated, $jadwal, $bulan, $tahun) {
+            $jadwal->update([
+                'bulan' => $bulan,
+                'tahun' => $tahun,
+                'status' => 'draft',
+                'catatan' => $validated['catatan'] ?? null,
+                'approved_by' => null,
+                'approved_at' => null,
+            ]);
+
+            $detailIds = [];
+
+            foreach ($validated['details'] as $detail) {
+                $detailData = [
+                    'posyandu_id' => $detail['posyandu_id'],
+                    'kegiatan_id' => $detail['kegiatan_id'],
+                    'tgl_mulai' => $detail['tgl_mulai'],
+                    'tgl_selesai' => $detail['tgl_selesai'],
+                    'jam_mulai' => $detail['jam_mulai'] ?? null,
+                    'jam_selesai' => $detail['jam_selesai'] ?? null,
+                    'keterangan' => $detail['keterangan'] ?? null,
+                ];
+
+                if (!empty($detail['id'])) {
+                    $detailModel = $jadwal->details()
+                        ->where('id', $detail['id'])
+                        ->firstOrFail();
+
+                    $detailModel->update($detailData);
+                    $detailIds[] = $detailModel->id;
+                } else {
+                    $detailModel = $jadwal->details()
+                        ->create($detailData);
+
+                    $detailIds[] = $detailModel->id;
+                }
+            }
+
+            $jadwal->details()
+                ->whereNotIn('id', $detailIds)
+                ->delete();
+        });
+
+        return redirect()
+            ->route('jadwal.index')
+            ->with('success', 'Jadwal bulanan berhasil diperbarui.');
+    }
+
+    /**
+     * Menghapus jadwal bulanan.
+     */
+    public function destroy(JadwalBulanan $jadwal)
+    {
+        if (!in_array($jadwal->status, ['draft', 'ditolak'])) {
+            return redirect()
+                ->route('jadwal.index')
+                ->with(
+                    'error',
+                    'Jadwal dengan status tersebut tidak dapat dihapus.'
+                );
+        }
+
+        $namaBulan = Carbon::create()
+            ->month($jadwal->bulan)
+            ->locale('id')
+            ->translatedFormat('F');
+
+        $jadwal->delete();
+
+        return redirect()
+            ->route('jadwal.index')
+            ->with(
+                'success',
+                "Data jadwal bulan {$namaBulan} {$jadwal->tahun} beserta seluruh detail kegiatannya berhasil dihapus."
+            );
+    }
+
+    /**
+     * Mengajukan jadwal untuk proses persetujuan.
+     */
+    public function submit(JadwalBulanan $jadwal)
+    {
+        if ($jadwal->status !== 'draft') {
+            return back()
+                ->with('error', 'Hanya jadwal draft yang dapat diajukan.');
+        }
 
         $jadwal->update([
-            'status' => $status,
-            'catatan_banmus' => $request->catatan,
-            'approved_by' => auth()->id(),
-            'approved_at' => now()
+            'status' => 'diajukan',
         ]);
 
-        $msg = ($status == 'disetujui') ? 'Jadwal telah FINAL dan Terkunci.' : 'Jadwal ditolak. Admin harus revisi.';
-        return redirect()->route('petugas.jadwal.index')->with('success', $msg);
+        return back()
+            ->with('success', 'Jadwal berhasil diajukan untuk persetujuan.');
     }
 
-    // --- LOGIKA HELPER ---
-
-    private function validateRequest($request)
+    /**
+     * Menyetujui atau menolak jadwal.
+     */
+    public function approve(Request $request, JadwalBulanan $jadwal)
     {
-        $request->validate([
-            'bulan' => 'required|integer|between:1,12',
-            'tahun' => 'required|integer',
-            'details' => 'required|array|min:1',
-            'details.*.akd_id' => 'nullable|exists:akds,id', // Diubah jadi nullable
-            'details.*.kegiatan_id' => 'required|exists:kegiatans,id', // Wajib ada dari master
-            'details.*.tipe_kunjungan' => 'required|in:DP,LP',
-            'details.*.tgl_mulai' => 'required|date',
-            'details.*.tujuan' => 'required|string|max:255',
-            'details.*.tgl_selesai' => 'required|date|after_or_equal:details.*.tgl_mulai',
+        $validated = $request->validate([
+            'status' => [
+                'required',
+                'in:disetujui,ditolak',
+            ],
+
+            'catatan' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
         ]);
-    }
 
-    private function checkBusinessRules($request, $excludeJadwalId = null)
-    {
-        $inputDetails = $request->details;
-        $quotaInRequest = [];
-
-        foreach ($inputDetails as $detail) {
-            // Jika Non-AKD, lewati pengecekan kuota kunker
-            if (empty($detail['akd_id'])) {
-                continue;
-            }
-
-            $akd = Akd::findOrFail($detail['akd_id']);
-            $start = $detail['tgl_mulai'];
-            $end = $detail['tgl_selesai'];
-            $tipe = $detail['tipe_kunjungan'];
-
-            // 1. Validasi Durasi (DP=2 hari, LP=3 hari)
-            $durasi = Carbon::parse($start)->diffInDays(Carbon::parse($end)) + 1;
-            $wajib = ($tipe == 'DP') ? 2 : 3;
-            if ($durasi != $wajib) {
-                return "Durasi {$akd->nama_akd} ({$tipe}) harus {$wajib} hari.";
-            }
-
-            $key = $akd->id . '_' . $tipe;
-            $quotaInRequest[$key] = ($quotaInRequest[$key] ?? 0) + 1;
-
-
-            $bentrok = JadwalDetail::where('akd_id', $akd->id)
-                ->where(function ($query) use ($start, $end) {
-                    $query->where(function ($q) use ($start, $end) {
-                        $q->whereBetween('tgl_mulai', [$start, $end])
-                            ->orWhereBetween('tgl_selesai', [$start, $end]);
-                    });
-                })
-                ->whereHas('jadwalBulanan', function ($q) use ($excludeJadwalId) {
-                    $q->where('status', 'disetujui');
-                    if ($excludeJadwalId) $q->where('id', '!=', $excludeJadwalId);
-                })->first();
-
-            if ($bentrok) {
-                return "Bentrok! {$akd->nama_akd} memiliki jadwal FINAL pada {$bentrok->tgl_mulai} s/d {$bentrok->tgl_selesai}.";
-            }
+        if ($jadwal->status !== 'diajukan') {
+            return back()
+                ->with('error', 'Jadwal belum diajukan untuk persetujuan.');
         }
-        return null;
+
+        $jadwal->update([
+            'status' => $validated['status'],
+            'catatan' => $validated['catatan'] ?? $jadwal->catatan,
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        $message = $validated['status'] === 'disetujui'
+            ? 'Jadwal berhasil disetujui.'
+            : 'Jadwal ditolak dan dapat direvisi.';
+
+        return redirect()
+            ->route('jadwal.index')
+            ->with('success', $message);
     }
 
-
+    /**
+     * Laporan jadwal berdasarkan bulan dan tahun.
+     */
     public function laporan(Request $request)
     {
-        $bulan = (int) ($request->bulan ?? date('m'));
-        $tahun = (int) ($request->tahun ?? date('Y'));
+        $bulan = (int) ($request->bulan ?? now()->month);
+        $tahun = (int) ($request->tahun ?? now()->year);
 
-        $details = JadwalDetail::with(['akd', 'jadwalBulanan.approver'])
-            ->whereHas('jadwalBulanan', function ($q) use ($bulan, $tahun) {
-                $q->where('status', 'disetujui')
-                    ->where('bulan', $bulan)
-                    ->where('tahun', $tahun);
-            })
-            ->get()
-            ->groupBy('akd.nama_akd');
+        $jadwal = JadwalBulanan::with([
+                'details.posyandu.wilayah',
+                'details.kegiatan',
+            ])
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->whereIn('status', ['disetujui', 'final'])
+            ->first();
 
-        return view('pages.jadwal.laporan', compact('details', 'bulan', 'tahun'));
+        return view('pages.jadwal.laporan', compact(
+            'jadwal',
+            'bulan',
+            'tahun'
+        ));
     }
 }

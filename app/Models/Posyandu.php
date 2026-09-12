@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Posyandu extends Model
 {
     use HasFactory;
+
+    protected $table = 'posyandus';
 
     protected $fillable = [
         'wilayah_id',
@@ -25,18 +25,45 @@ class Posyandu extends Model
         'aktif' => 'boolean',
     ];
 
-    public function wilayah(): BelongsTo
+    /*
+    |--------------------------------------------------------------------------
+    | Relasi Wilayah
+    |--------------------------------------------------------------------------
+    */
+
+    public function wilayah()
     {
-        return $this->belongsTo(Wilayah::class);
+        return $this->belongsTo(
+            Wilayah::class,
+            'wilayah_id'
+        );
     }
 
-    public function hariOperasionals(): HasMany
+    /*
+    |--------------------------------------------------------------------------
+    | Relasi Hari Operasional
+    |--------------------------------------------------------------------------
+    */
+
+    public function hariOperasionals()
     {
-        return $this->hasMany(HariOperasional::class);
+        return $this->hasMany(
+            HariOperasional::class,
+            'posyandu_id'
+        );
     }
 
-    public function jadwalDetails(): HasMany
+    /*
+    |--------------------------------------------------------------------------
+    | Relasi Detail Jadwal
+    |--------------------------------------------------------------------------
+    */
+
+    public function jadwalDetails()
     {
-        return $this->hasMany(JadwalDetail::class);
+        return $this->hasMany(
+            JadwalDetail::class,
+            'posyandu_id'
+        );
     }
 }

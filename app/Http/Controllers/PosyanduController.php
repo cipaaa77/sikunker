@@ -5,92 +5,158 @@ namespace App\Http\Controllers;
 use App\Models\Posyandu;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class PosyanduController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
+
     public function index(Request $request)
     {
-        $search = $request->input('search');
+        $query = Posyandu::query()
+            ->with('wilayah')
+            ->withCount('hariOperasionals')
+            ->orderBy('id');
 
-        $posyandus = Posyandu::with('wilayah')
-            ->when($search, function ($query, $search) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('kode_posyandu', 'like', "%{$search}%")
-                        ->orWhere('nama_posyandu', 'like', "%{$search}%")
-                        ->orWhere('ketua', 'like', "%{$search}%")
-                        ->orWhereHas('wilayah', function ($query) use ($search) {
-                            $query->where('nama_wilayah', 'like', "%{$search}%");
-                        });
-                });
-            })
-            ->latest()
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('kode_posyandu', 'like', "%{$search}%")
+                    ->orWhere('nama_posyandu', 'like', "%{$search}%")
+                    ->orWhere('ketua', 'like', "%{$search}%")
+                    ->orWhere('kontak', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%")
+                    ->orWhereHas('wilayah', function ($wilayahQuery) use ($search) {
+                        $wilayahQuery->where(
+                            'nama_wilayah',
+                            'like',
+                            "%{$search}%"
+                        );
+                    });
+            });
+        }
+
+        if ($request->filled('status')) {
+            if ($request->status === 'aktif') {
+                $query->where('aktif', true);
+            }
+
+            if ($request->status === 'nonaktif') {
+                $query->where('aktif', false);
+            }
+        }
+
+        $posyandus = $query
             ->paginate(10)
             ->withQueryString();
 
         return view(
             'pages.posyandu.index',
-            compact('posyandus', 'search')
+            compact('posyandus')
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
+    */
 
     public function create()
     {
-        $wilayahs = Wilayah::where('aktif', true)
+        $wilayahs = Wilayah::query()
             ->orderBy('nama_wilayah')
             ->get();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Preview kode berikutnya
+        |--------------------------------------------------------------------------
+        */
+
+        $kodeBerikutnya = $this->generateKodePosyandu();
+
         return view(
             'pages.posyandu.create',
-            compact('wilayahs')
+            compact(
+                'wilayahs',
+                'kodeBerikutnya'
+            )
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | STORE
+    |--------------------------------------------------------------------------
+    */
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'wilayah_id' => [
                 'required',
+                'integer',
                 'exists:wilayahs,id',
             ],
-            'kode_posyandu' => [
-                'required',
-                'string',
-                'max:255',
-                'unique:posyandus,kode_posyandu',
-            ],
+
             'nama_posyandu' => [
                 'required',
                 'string',
                 'max:255',
             ],
+
             'alamat' => [
                 'nullable',
                 'string',
             ],
+
             'ketua' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
+
             'kontak' => [
                 'nullable',
                 'string',
-                'max:255',
+                'max:30',
             ],
+
             'aktif' => [
                 'nullable',
                 'boolean',
             ],
         ], [
-            'wilayah_id.required' => 'Wilayah wajib dipilih.',
-            'wilayah_id.exists' => 'Wilayah tidak ditemukan.',
-            'kode_posyandu.required' => 'Kode Posyandu wajib diisi.',
-            'kode_posyandu.unique' => 'Kode Posyandu sudah digunakan.',
-            'nama_posyandu.required' => 'Nama Posyandu wajib diisi.',
+            'wilayah_id.required' =>
+                'Wilayah wajib dipilih.',
+
+            'wilayah_id.exists' =>
+                'Wilayah yang dipilih tidak tersedia.',
+
+            'nama_posyandu.required' =>
+                'Nama Posyandu wajib diisi.',
         ]);
 
-        $validated['aktif'] = $request->boolean('aktif');
+        /*
+        |--------------------------------------------------------------------------
+        | Generate kode otomatis dan berurutan
+        |--------------------------------------------------------------------------
+        */
+
+        $validated['kode_posyandu'] =
+            $this->generateKodePosyandu();
+
+        $validated['aktif'] =
+            $request->boolean('aktif');
 
         Posyandu::create($validated);
 
@@ -98,15 +164,28 @@ class PosyanduController extends Controller
             ->route('posyandu.index')
             ->with(
                 'success',
-                'Posyandu berhasil ditambahkan.'
+                'Posyandu berhasil ditambahkan dengan kode '
+                . $validated['kode_posyandu']
+                . '.'
             );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW
+    |--------------------------------------------------------------------------
+    */
 
     public function show(Posyandu $posyandu)
     {
         $posyandu->load([
             'wilayah',
-            'hariOperasionals',
+            'hariOperasionals' => function ($query) {
+                $query
+                    ->orderBy('hari')
+                    ->orderBy('id');
+            },
+            'jadwalDetails.jadwal',
             'jadwalDetails.kegiatan',
         ]);
 
@@ -116,65 +195,90 @@ class PosyanduController extends Controller
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT
+    |--------------------------------------------------------------------------
+    */
+
     public function edit(Posyandu $posyandu)
     {
-        $wilayahs = Wilayah::where('aktif', true)
-            ->orWhere('id', $posyandu->wilayah_id)
+        $wilayahs = Wilayah::query()
             ->orderBy('nama_wilayah')
             ->get();
 
         return view(
             'pages.posyandu.edit',
-            compact('posyandu', 'wilayahs')
+            compact(
+                'posyandu',
+                'wilayahs'
+            )
         );
     }
 
-    public function update(Request $request, Posyandu $posyandu)
-    {
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
+
+    public function update(
+        Request $request,
+        Posyandu $posyandu
+    ) {
         $validated = $request->validate([
             'wilayah_id' => [
                 'required',
+                'integer',
                 'exists:wilayahs,id',
             ],
-            'kode_posyandu' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('posyandus', 'kode_posyandu')
-                    ->ignore($posyandu->id),
-            ],
+
             'nama_posyandu' => [
                 'required',
                 'string',
                 'max:255',
             ],
+
             'alamat' => [
                 'nullable',
                 'string',
             ],
+
             'ketua' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
+
             'kontak' => [
                 'nullable',
                 'string',
-                'max:255',
+                'max:30',
             ],
+
             'aktif' => [
                 'nullable',
                 'boolean',
             ],
         ], [
-            'wilayah_id.required' => 'Wilayah wajib dipilih.',
-            'wilayah_id.exists' => 'Wilayah tidak ditemukan.',
-            'kode_posyandu.required' => 'Kode Posyandu wajib diisi.',
-            'kode_posyandu.unique' => 'Kode Posyandu sudah digunakan.',
-            'nama_posyandu.required' => 'Nama Posyandu wajib diisi.',
+            'wilayah_id.required' =>
+                'Wilayah wajib dipilih.',
+
+            'wilayah_id.exists' =>
+                'Wilayah yang dipilih tidak tersedia.',
+
+            'nama_posyandu.required' =>
+                'Nama Posyandu wajib diisi.',
         ]);
 
-        $validated['aktif'] = $request->boolean('aktif');
+        /*
+        |--------------------------------------------------------------------------
+        | Kode tidak diubah saat edit
+        |--------------------------------------------------------------------------
+        */
+
+        $validated['aktif'] =
+            $request->boolean('aktif');
 
         $posyandu->update($validated);
 
@@ -182,28 +286,30 @@ class PosyanduController extends Controller
             ->route('posyandu.index')
             ->with(
                 'success',
-                'Posyandu berhasil diperbarui.'
+                'Data Posyandu berhasil diperbarui.'
             );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | DESTROY
+    |--------------------------------------------------------------------------
+    */
+
     public function destroy(Posyandu $posyandu)
     {
-        if ($posyandu->hariOperasionals()->exists()) {
-            return redirect()
-                ->route('posyandu.index')
-                ->with(
-                    'error',
-                    'Posyandu tidak dapat dihapus karena masih memiliki hari operasional.'
-                );
+        if ($posyandu->jadwalDetails()->exists()) {
+            return back()->with(
+                'error',
+                'Posyandu tidak dapat dihapus karena sudah digunakan pada jadwal.'
+            );
         }
 
-        if ($posyandu->jadwalDetails()->exists()) {
-            return redirect()
-                ->route('posyandu.index')
-                ->with(
-                    'error',
-                    'Posyandu tidak dapat dihapus karena sudah digunakan dalam jadwal.'
-                );
+        if ($posyandu->hariOperasionals()->exists()) {
+            return back()->with(
+                'error',
+                'Posyandu tidak dapat dihapus karena masih memiliki hari operasional.'
+            );
         }
 
         $posyandu->delete();
@@ -214,5 +320,53 @@ class PosyanduController extends Controller
                 'success',
                 'Posyandu berhasil dihapus.'
             );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GENERATE KODE POSYANDU OTOMATIS
+    |--------------------------------------------------------------------------
+    */
+
+    private function generateKodePosyandu(): string
+    {
+        return DB::transaction(function () {
+            $kodeTerakhir = Posyandu::query()
+                ->where('kode_posyandu', 'like', 'POS-%')
+                ->orderByDesc('id')
+                ->value('kode_posyandu');
+
+            if ($kodeTerakhir) {
+                $nomorTerakhir = (int) str_replace(
+                    'POS-',
+                    '',
+                    $kodeTerakhir
+                );
+            } else {
+                $nomorTerakhir = 0;
+            }
+
+            $nomorBaru = $nomorTerakhir + 1;
+
+            do {
+                $kodeBaru = 'POS-' . str_pad(
+                    $nomorBaru,
+                    3,
+                    '0',
+                    STR_PAD_LEFT
+                );
+
+                $kodeSudahAda = Posyandu::query()
+                    ->where('kode_posyandu', $kodeBaru)
+                    ->exists();
+
+                if ($kodeSudahAda) {
+                    $nomorBaru++;
+                }
+
+            } while ($kodeSudahAda);
+
+            return $kodeBaru;
+        });
     }
 }

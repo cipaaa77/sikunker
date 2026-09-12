@@ -11,41 +11,28 @@ return new class extends Migration
         Schema::create('jadwal_approvals', function (Blueprint $table) {
             $table->id();
 
-            /*
-             * Jadwal yang diverifikasi
-             */
             $table->foreignId('jadwal_id')
                 ->constrained('jadwal_bulanans')
+                ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
-            /*
-             * User yang melakukan approval
-             */
             $table->foreignId('user_id')
                 ->constrained('users')
+                ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
-            /*
-             * Status approval
-             */
             $table->enum('status', [
                 'diajukan',
                 'disetujui',
-                'ditolak'
             ]);
 
-            /*
-             * Catatan koordinator
-             */
             $table->text('catatan')->nullable();
 
             $table->timestamp('approved_at')->nullable();
 
             $table->timestamps();
 
-            $table->index('jadwal_id');
-            $table->index('user_id');
-            $table->index('status');
+            $table->unique('jadwal_id');
         });
     }
 

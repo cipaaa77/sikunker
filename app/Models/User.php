@@ -49,11 +49,17 @@ class User extends Authenticatable
 
     public function approvals(): HasMany
     {
-        return $this->hasMany(JadwalApproval::class);
+        return $this->hasMany(
+            JadwalApproval::class,
+            'user_id'
+        );
     }
 
     public function statusLogs(): HasMany
     {
-        return $this->hasMany(JadwalStatusLog::class);
+        return $this->hasMany(
+            JadwalStatusLog::class,
+            'user_id'
+        );
     }
 }

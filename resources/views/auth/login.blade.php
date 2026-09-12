@@ -12,7 +12,7 @@
                 {{-- LOGO --}}
                 <div class="text-center">
                     <img
-                        src="{{ asset('images/logo-posyandu.png') }}"
+                        src="{{ asset('storage/logo_posyandu.png') }}"
                         class="login-logo"
                         alt="Logo Posyandu"
                     >
@@ -136,15 +136,13 @@
             <div class="login-cover">
 
                 <div>
-                    <i class="fas fa-calendar-check fa-4x mb-4"></i>
 
                     <h2>
                         Sistem Penjadwalan Posyandu
                     </h2>
 
                     <p>
-                        Kelola jadwal kegiatan Posyandu dengan lebih
-                        terstruktur, mudah, dan terintegrasi.
+                        Kota bla bla bla
                     </p>
                 </div>
 

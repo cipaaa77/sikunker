@@ -17,13 +17,13 @@
                 Kembali
             </a>
 
-            <h4 class="fw-bold mt-3 mb-1">
-                Atur Jadwal Bulanan
+            <h4 class="fw-bold mt-3 mb-1 text-white">
+                Edit Jadwal Bulanan
             </h4>
 
-            <p class="text-muted mb-0">
+            <p class="text-muted mb-0 text-white">
                 Periode
-                <strong>
+                <strong text-white>
                     {{ \Carbon\Carbon::create()->month($jadwal->bulan)->translatedFormat('F') }}
                     {{ $jadwal->tahun }}
                 </strong>

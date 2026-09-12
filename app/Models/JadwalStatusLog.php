@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class JadwalStatusLog extends Model
 {
     use HasFactory;
 
     public $timestamps = false;
+
+    protected $table = 'jadwal_status_logs';
 
     protected $fillable = [
         'jadwal_id',
@@ -25,7 +26,7 @@ class JadwalStatusLog extends Model
         'created_at' => 'datetime',
     ];
 
-    public function jadwal(): BelongsTo
+    public function jadwal()
     {
         return $this->belongsTo(
             JadwalBulanan::class,
@@ -33,8 +34,11 @@ class JadwalStatusLog extends Model
         );
     }
 
-    public function user(): BelongsTo
+    public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            User::class,
+            'user_id'
+        );
     }
 }

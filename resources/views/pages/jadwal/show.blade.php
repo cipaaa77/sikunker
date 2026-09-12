@@ -18,7 +18,7 @@
                 Kembali
             </a>
 
-            <h4 class="fw-bold mt-3 mb-1">
+            <h4 class="fw-bold mt-3 mb-1 text-white">
                 Detail Jadwal Bulanan
             </h4>
 
@@ -34,7 +34,7 @@
         <div class="d-flex gap-2">
 
             @if($jadwal->status !== 'final')
-
+            <!-- ini aku masih belum tahu nnti tak revisi -->
                 <a
                     href="{{ route('jadwal.edit', $jadwal) }}"
                     class="btn btn-outline-primary"
@@ -45,22 +45,7 @@
 
             @endif
 
-            <a
-                href="{{ route('jadwal.pdf', $jadwal) }}"
-                target="_blank"
-                class="btn btn-outline-danger"
-            >
-                <i class="fa-solid fa-file-pdf me-1"></i>
-                PDF
-            </a>
-
-            <a
-                href="{{ route('jadwal.excel', $jadwal) }}"
-                class="btn btn-outline-success"
-            >
-                <i class="fa-solid fa-file-excel me-1"></i>
-                Excel
-            </a>
+          
 
         </div>
 

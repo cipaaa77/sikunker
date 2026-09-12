@@ -7,15 +7,49 @@ use App\Http\Controllers\PosyanduController;
 use App\Http\Controllers\KegiatanController;
 use App\Http\Controllers\HariOperasionalController;
 use App\Http\Controllers\JadwalBulananController;
-use App\Http\Controllers\GenerateJadwalController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/login', [AuthController::class, 'showLogin'])
-    ->name('login');
 
-Route::post('/login', [AuthController::class, 'login'])
-    ->name('login.process');
+/*
+|--------------------------------------------------------------------------
+| Root Redirect
+|--------------------------------------------------------------------------
+*/
 
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return redirect()->route('login');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Authentication
+|--------------------------------------------------------------------------
+*/
+
+// Halaman login
+Route::get('/login', [
+    AuthController::class,
+    'showLogin',
+])->name('login');
+
+// Proses login
+Route::post('/login', [
+    AuthController::class,
+    'login',
+])->name('login.process');
+
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth')->group(function () {
 
@@ -25,8 +59,10 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+    Route::get('/dashboard', [
+        DashboardController::class,
+        'index',
+    ])->name('dashboard');
 
 
     /*
@@ -35,12 +71,25 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::resource('wilayah', WilayahController::class);
+    // Master wilayah
+    Route::resource(
+        'wilayah',
+        WilayahController::class
+    );
 
-    Route::resource('posyandu', PosyanduController::class);
+    // Master posyandu
+    Route::resource(
+        'posyandu',
+        PosyanduController::class
+    );
 
-    Route::resource('kegiatan', KegiatanController::class);
+    // Master kegiatan
+    Route::resource(
+        'kegiatan',
+        KegiatanController::class
+    );
 
+    // Master hari operasional
     Route::resource(
         'hari-operasional',
         HariOperasionalController::class
@@ -49,56 +98,120 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Jadwal Bulanan
+    | Master User - Khusus Admin
     |--------------------------------------------------------------------------
     */
 
-    Route::get(
-        '/jadwal/{jadwal}/pdf',
-        [JadwalBulananController::class, 'pdf']
-    )->name('jadwal.pdf');
+    Route::middleware('role:admin')
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
 
-    Route::get(
-        '/jadwal/{jadwal}/excel',
-        [JadwalBulananController::class, 'excel']
-    )->name('jadwal.excel');
+            Route::resource(
+                'users',
+                UserController::class
+            );
 
-    Route::post(
-        '/jadwal/{jadwal}/generate',
-        [JadwalBulananController::class, 'generate']
-    )->name('jadwal.generate');
-
-    Route::resource(
-        'jadwal',
-        JadwalBulananController::class
-    );
+        });
 
 
     /*
     |--------------------------------------------------------------------------
-    | Generate Jadwal
+    | Jadwal Bulanan
     |--------------------------------------------------------------------------
     */
 
-    Route::get(
-        '/generate-jadwal',
-        [GenerateJadwalController::class, 'index']
-    )->name('generate-jadwal.index');
+    // Index
+    Route::get('/jadwal', [
+        JadwalBulananController::class,
+        'index',
+    ])->name('jadwal.index');
 
-    Route::get(
-        '/generate-jadwal/create',
-        [GenerateJadwalController::class, 'create']
-    )->name('generate-jadwal.create');
+    // Create
+    Route::get('/jadwal/create', [
+        JadwalBulananController::class,
+        'create',
+    ])->name('jadwal.create');
 
-    Route::post(
-        '/generate-jadwal',
-        [GenerateJadwalController::class, 'store']
-    )->name('generate-jadwal.store');
+    // Store
+    Route::post('/jadwal', [
+        JadwalBulananController::class,
+        'store',
+    ])->name('jadwal.store');
 
-    Route::get(
-        '/generate-jadwal/{jadwal}',
-        [GenerateJadwalController::class, 'show']
-    )->name('generate-jadwal.show');
+    // Show
+    Route::get('/jadwal/{jadwal}', [
+        JadwalBulananController::class,
+        'show',
+    ])->name('jadwal.show');
+
+    // Edit
+    Route::get('/jadwal/{jadwal}/edit', [
+        JadwalBulananController::class,
+        'edit',
+    ])->name('jadwal.edit');
+
+    // Update
+    Route::put('/jadwal/{jadwal}', [
+        JadwalBulananController::class,
+        'update',
+    ])->name('jadwal.update');
+
+    // Delete
+    Route::delete('/jadwal/{jadwal}', [
+        JadwalBulananController::class,
+        'destroy',
+    ])->name('jadwal.destroy');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Route Khusus Jadwal
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/jadwal/laporan', [
+        JadwalBulananController::class,
+        'laporan',
+    ])->name('jadwal.laporan');
+
+    Route::post('/jadwal/{jadwal}/submit', [
+        JadwalBulananController::class,
+        'submit',
+    ])->name('jadwal.submit');
+
+    Route::post('/jadwal/{jadwal}/approve', [
+        JadwalBulananController::class,
+        'approve',
+    ])->name('jadwal.approve');
+
+    Route::post('/jadwal/{jadwal}/generate', [
+        JadwalBulananController::class,
+        'generate',
+    ])->name('jadwal.generate');
+
+    Route::post('/jadwal/{jadwal}/generate-one', [
+        JadwalBulananController::class,
+        'generateOne',
+    ])->name('jadwal.generate-one');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Export PDF
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/jadwal/{jadwal}/pdf', [
+        JadwalBulananController::class,
+        'pdf',
+    ])->name('jadwal.pdf');
+
+    Route::get('/jadwal/{jadwal}/pdf/{posyandu}', [
+        JadwalBulananController::class,
+        'pdfOne',
+    ])->name('jadwal.pdf-one');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -106,18 +219,9 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/logout', [AuthController::class, 'logout'])
-        ->name('logout');
-
-});
-
-
-Route::get('/', function () {
-
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-
-    return redirect()->route('login');
+    Route::post('/logout', [
+        AuthController::class,
+        'logout',
+    ])->name('logout');
 
 });

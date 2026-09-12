@@ -11,62 +11,37 @@ return new class extends Migration
         Schema::create('jadwal_bulanans', function (Blueprint $table) {
             $table->id();
 
-            /*
-             * Periode jadwal
-             */
             $table->unsignedTinyInteger('bulan');
+
             $table->unsignedSmallInteger('tahun');
 
-            /*
-             * Workflow:
-             *
-             * draft
-             * diajukan
-             * disetujui
-             * ditolak
-             * final
-             */
             $table->enum('status', [
                 'draft',
                 'diajukan',
                 'disetujui',
-                'ditolak',
-                'final'
             ])->default('draft');
 
             $table->text('catatan')->nullable();
 
-            /*
-             * Pembuat jadwal
-             */
             $table->foreignId('dibuat_oleh')
-                ->nullable()
                 ->constrained('users')
-                ->nullOnDelete();
+                ->cascadeOnUpdate()
+                ->restrictOnDelete();
 
-            /*
-             * User yang memberikan approval terakhir
-             */
             $table->foreignId('approved_by')
                 ->nullable()
                 ->constrained('users')
+                ->cascadeOnUpdate()
                 ->nullOnDelete();
 
             $table->timestamp('approved_at')->nullable();
 
             $table->timestamps();
 
-            /*
-             * Satu periode hanya memiliki satu
-             * jadwal bulanan.
-             */
             $table->unique([
                 'bulan',
-                'tahun'
+                'tahun',
             ]);
-
-            $table->index('status');
-            $table->index('tahun');
         });
     }
 

@@ -10,7 +10,8 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::all();
+        $users = User::latest()->get();
+
         return view('pages.users.index', compact('users'));
     }
 
@@ -21,21 +22,25 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'role' => 'required|in:admin,bamus', // Sesuai migration: bamus
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => 'nullable|string|min:8',
+            'role' => 'required|in:admin,petugas,koordinator',
         ]);
 
         User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make(
+                $validated['password'] ?? 'password'
+            ),
+            'role' => $validated['role'],
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'User berhasil ditambahkan.');
     }
 
     public function edit(User $user)
@@ -45,28 +50,34 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:admin,bamus',
+            'role' => 'required|in:admin,petugas,koordinator',
+            'password' => 'nullable|string|min:8',
         ]);
 
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->role = $request->role;
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->role = $validated['role'];
 
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
         }
 
         $user->save();
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'User berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'User berhasil dihapus.');
     }
 }
