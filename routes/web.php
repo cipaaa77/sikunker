@@ -18,11 +18,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
+
     if (auth()->check()) {
         return redirect()->route('dashboard');
     }
 
     return redirect()->route('login');
+
 });
 
 
@@ -52,6 +54,7 @@ Route::post('/login', [
 */
 
 Route::middleware('auth')->group(function () {
+
 
     /*
     |--------------------------------------------------------------------------
@@ -121,6 +124,84 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Laporan Jadwal
+    |--------------------------------------------------------------------------
+    |
+    | Route laporan diletakkan sebelum route /jadwal/{jadwal}
+    | supaya "laporan" tidak dianggap sebagai ID jadwal.
+    |
+    */
+
+    Route::get('/jadwal/laporan', [
+        JadwalBulananController::class,
+        'laporan',
+    ])->name('jadwal.laporan');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generate Jadwal
+    |--------------------------------------------------------------------------
+    |
+    | Route khusus diletakkan sebelum route dinamis.
+    |
+    */
+
+    Route::post('/jadwal/{jadwal}/generate', [
+        JadwalBulananController::class,
+        'generate',
+    ])->name('jadwal.generate');
+
+    Route::post('/jadwal/{jadwal}/generate-one', [
+        JadwalBulananController::class,
+        'generateOne',
+    ])->name('jadwal.generate-one');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pengajuan dan Persetujuan Jadwal
+    |--------------------------------------------------------------------------
+    */
+
+    // Admin mengajukan jadwal
+    Route::post('/jadwal/{jadwal}/submit', [
+        JadwalBulananController::class,
+        'submit',
+    ])->name('jadwal.submit');
+
+    // Koordinator menyetujui jadwal
+    Route::post('/jadwal/{jadwal}/approve', [
+        JadwalBulananController::class,
+        'approve',
+    ])->name('jadwal.approve');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Export PDF
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/jadwal/{jadwal}/pdf', [
+        JadwalBulananController::class,
+        'pdf',
+    ])->name('jadwal.pdf');
+
+    Route::get('/jadwal/{jadwal}/pdf/{posyandu}', [
+        JadwalBulananController::class,
+        'pdfOne',
+    ])->name('jadwal.pdf-one');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CRUD Jadwal Bulanan
+    |--------------------------------------------------------------------------
+    */
+
     // Index
     Route::get('/jadwal', [
         JadwalBulananController::class,
@@ -162,55 +243,6 @@ Route::middleware('auth')->group(function () {
         JadwalBulananController::class,
         'destroy',
     ])->name('jadwal.destroy');
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Route Khusus Jadwal
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get('/jadwal/laporan', [
-        JadwalBulananController::class,
-        'laporan',
-    ])->name('jadwal.laporan');
-
-    Route::post('/jadwal/{jadwal}/submit', [
-        JadwalBulananController::class,
-        'submit',
-    ])->name('jadwal.submit');
-
-    Route::post('/jadwal/{jadwal}/approve', [
-        JadwalBulananController::class,
-        'approve',
-    ])->name('jadwal.approve');
-
-    Route::post('/jadwal/{jadwal}/generate', [
-        JadwalBulananController::class,
-        'generate',
-    ])->name('jadwal.generate');
-
-    Route::post('/jadwal/{jadwal}/generate-one', [
-        JadwalBulananController::class,
-        'generateOne',
-    ])->name('jadwal.generate-one');
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Export PDF
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get('/jadwal/{jadwal}/pdf', [
-        JadwalBulananController::class,
-        'pdf',
-    ])->name('jadwal.pdf');
-
-    Route::get('/jadwal/{jadwal}/pdf/{posyandu}', [
-        JadwalBulananController::class,
-        'pdfOne',
-    ])->name('jadwal.pdf-one');
 
 
     /*

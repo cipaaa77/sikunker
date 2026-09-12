@@ -294,103 +294,94 @@ public function index(Request $request)
     |--------------------------------------------------------------------------
     */
 
-    public function update(
-        Request $request,
-        JadwalBulanan $jadwal
-    ) {
-        if ($jadwal->status === 'disetujui') {
-            return back()->with(
-                'error',
-                'Jadwal yang sudah disetujui tidak dapat diubah.'
-            );
-        }
+   public function update(Request $request, JadwalBulanan $jadwal)
+{
+    $validated = $request->validate([
+        'catatan' => [
+            'nullable',
+            'string',
+        ],
 
-        $validated = $request->validate([
-            'catatan' => [
-                'nullable',
-                'string',
-            ],
+        'details' => [
+            'required',
+            'array',
+            'min:1',
+        ],
 
-            'details' => [
-                'required',
-                'array',
-                'min:1',
-            ],
+        'details.*.id' => [
+            'nullable',
+            'integer',
+        ],
 
-            'details.*.id' => [
-                'nullable',
-                'integer',
-                'exists:jadwal_details,id',
-            ],
+        'details.*.posyandu_id' => [
+            'required',
+            'integer',
+        ],
 
-            'details.*.posyandu_id' => [
-                'required',
-                'integer',
-                'exists:posyandus,id',
-            ],
+        'details.*.kegiatan_id' => [
+            'required',
+            'integer',
+        ],
 
-            'details.*.kegiatan_id' => [
-                'required',
-                'integer',
-                'exists:kegiatans,id',
-            ],
+        'details.*.tgl_mulai' => [
+            'required',
+            'date',
+        ],
 
-            'details.*.tgl_mulai' => [
-                'required',
-                'date',
-            ],
+        'details.*.tgl_selesai' => [
+            'required',
+            'date',
+            'after_or_equal:details.*.tgl_mulai',
+        ],
 
-            'details.*.tgl_selesai' => [
-                'required',
-                'date',
-            ],
+        'details.*.jam_mulai' => [
+            'required',
+            'date_format:H:i',
+        ],
 
-            'details.*.jam_mulai' => [
-                'required',
-                'date_format:H:i',
-            ],
+        'details.*.jam_selesai' => [
+            'required',
+            'date_format:H:i',
+        ],
 
-            'details.*.jam_selesai' => [
-                'required',
-                'date_format:H:i',
-            ],
+        'details.*.keterangan' => [
+            'nullable',
+            'string',
+        ],
+    ]);
 
-            'details.*.keterangan' => [
-                'nullable',
-                'string',
-            ],
+    DB::transaction(function () use ($validated, $jadwal) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan informasi utama jadwal
+        |--------------------------------------------------------------------------
+        | Tombol Simpan membuat status tetap diajukan.
+        |--------------------------------------------------------------------------
+        */
+
+        $jadwal->update([
+            'catatan' => $validated['catatan'] ?? null,
+            'status' => 'diajukan',
         ]);
 
-        $this->validateDetailDates(
-            $validated['details'],
-            $jadwal->bulan,
-            $jadwal->tahun
-        );
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan detail kegiatan
+        |--------------------------------------------------------------------------
+        */
 
-        $this->validateDetailTimes(
-            $validated['details']
-        );
+        $detailIds = [];
 
-        $this->validateScheduleConflicts(
-            $validated['details']
-        );
+        foreach ($validated['details'] as $detail) {
 
-        DB::transaction(function () use (
-            $jadwal,
-            $validated
-        ) {
-            $jadwal->update([
-                'catatan' => $validated['catatan'] ?? null,
-            ]);
+            if (!empty($detail['id'])) {
 
-            $existingIds = [];
+                $jadwalDetail = $jadwal->details()
+                    ->where('id', $detail['id'])
+                    ->first();
 
-            foreach ($validated['details'] as $detail) {
-                if (!empty($detail['id'])) {
-                    $jadwalDetail = JadwalDetail::query()
-                        ->where('jadwal_id', $jadwal->id)
-                        ->where('id', $detail['id'])
-                        ->firstOrFail();
+                if ($jadwalDetail) {
 
                     $jadwalDetail->update([
                         'posyandu_id' => $detail['posyandu_id'],
@@ -402,41 +393,41 @@ public function index(Request $request)
                         'keterangan' => $detail['keterangan'] ?? null,
                     ]);
 
-                    $existingIds[] = $jadwalDetail->id;
-                } else {
-                    $newDetail = $jadwal->details()->create([
-                        'posyandu_id' => $detail['posyandu_id'],
-                        'kegiatan_id' => $detail['kegiatan_id'],
-                        'tgl_mulai' => $detail['tgl_mulai'],
-                        'tgl_selesai' => $detail['tgl_selesai'],
-                        'jam_mulai' => $detail['jam_mulai'],
-                        'jam_selesai' => $detail['jam_selesai'],
-                        'keterangan' => $detail['keterangan'] ?? null,
-                    ]);
-
-                    $existingIds[] = $newDetail->id;
+                    $detailIds[] = $jadwalDetail->id;
                 }
+
+            } else {
+
+                $jadwalDetail = $jadwal->details()->create([
+                    'posyandu_id' => $detail['posyandu_id'],
+                    'kegiatan_id' => $detail['kegiatan_id'],
+                    'tgl_mulai' => $detail['tgl_mulai'],
+                    'tgl_selesai' => $detail['tgl_selesai'],
+                    'jam_mulai' => $detail['jam_mulai'],
+                    'jam_selesai' => $detail['jam_selesai'],
+                    'keterangan' => $detail['keterangan'] ?? null,
+                ]);
+
+                $detailIds[] = $jadwalDetail->id;
             }
+        }
 
-            $deleteQuery = $jadwal->details();
+        /*
+        |--------------------------------------------------------------------------
+        | Hapus detail yang dihapus dari halaman edit
+        |--------------------------------------------------------------------------
+        */
 
-            if (count($existingIds) > 0) {
-                $deleteQuery->whereNotIn(
-                    'id',
-                    $existingIds
-                );
-            }
+        $jadwal->details()
+            ->whereNotIn('id', $detailIds)
+            ->delete();
+    });
 
-            $deleteQuery->delete();
-        });
+    return redirect()
+        ->route('jadwal.index')
+        ->with('success', 'Perubahan jadwal berhasil disimpan.');
+}
 
-        return redirect()
-            ->route('jadwal.edit', $jadwal)
-            ->with(
-                'success',
-                'Jadwal berhasil diperbarui.'
-            );
-    }
 
     /*
     |--------------------------------------------------------------------------
@@ -926,4 +917,148 @@ public function destroy(JadwalBulanan $jadwal)
             }
         }
     }
+
+
+    // SHOW
+    public function show(JadwalBulanan $jadwal)
+{
+    $jadwal->load([
+        'pembuat',
+        'approver',
+        'details' => function ($query) {
+            $query
+                ->orderBy('tgl_mulai')
+                ->orderBy('jam_mulai');
+        },
+        'details.posyandu.wilayah',
+        'details.kegiatan',
+        'approval',
+    ]);
+
+    return view(
+        'pages.jadwal.show',
+        compact('jadwal')
+    );
+}
+
+// SUBMIT DRAFT -> DIAJUKAN
+public function submit(JadwalBulanan $jadwal)
+{
+    if ($jadwal->status !== 'draft') {
+        return back()->with(
+            'error',
+            'Hanya jadwal dengan status draft yang dapat diajukan.'
+        );
+    }
+
+    if ($jadwal->details()->count() === 0) {
+        return back()->with(
+            'error',
+            'Jadwal belum memiliki detail kegiatan.'
+        );
+    }
+
+    $jadwal->update([
+        'status' => 'diajukan',
+    ]);
+
+    return redirect()
+        ->route('jadwal.show', $jadwal)
+        ->with(
+            'success',
+            'Jadwal berhasil diajukan untuk persetujuan.'
+        );
+}
+
+//DIAJUKAN->DISETUJUI
+// DIAJUKAN -> DISETUJUI
+public function approve(Request $request, JadwalBulanan $jadwal)
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Validasi status jadwal
+    |--------------------------------------------------------------------------
+    */
+
+    if ($jadwal->status !== 'diajukan') {
+        return redirect()
+            ->route('jadwal.index')
+            ->with(
+                'error',
+                'Hanya jadwal yang diajukan yang dapat disetujui.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pastikan user adalah koordinator
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        !auth()->check() ||
+        auth()->user()->role !== 'koordinator'
+    ) {
+        abort(
+            403,
+            'Anda tidak memiliki hak untuk menyetujui jadwal.'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Catatan koordinator
+    |--------------------------------------------------------------------------
+    */
+
+    $validated = $request->validate([
+        'catatan_koordinator' => [
+            'nullable',
+            'string',
+        ],
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update status jadwal
+    |--------------------------------------------------------------------------
+    */
+
+    $dataUpdate = [
+        'status' => 'disetujui',
+        'disetujui_oleh' => auth()->id(),
+        'disetujui_pada' => now(),
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Simpan catatan koordinator jika kolom tersedia
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        \Illuminate\Support\Facades\Schema::hasColumn(
+            $jadwal->getTable(),
+            'catatan_koordinator'
+        )
+    ) {
+        $dataUpdate['catatan_koordinator'] =
+            $validated['catatan_koordinator'] ?? null;
+    }
+
+    $jadwal->update($dataUpdate);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Kembali ke index
+    |--------------------------------------------------------------------------
+    */
+
+    return redirect()
+        ->route('jadwal.index')
+        ->with(
+            'success',
+            'Jadwal berhasil disetujui.'
+        );
+}
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JadwalBulanan extends Model
@@ -94,13 +95,12 @@ class JadwalBulanan extends Model
     | Approval
     |--------------------------------------------------------------------------
     */
-
-    public function approvals(): HasMany
-    {
-        return $this->hasMany(
-            JadwalApproval::class,
-            'jadwal_id',
-            'id'
-        );
-    }
+    public function approval(): HasOne
+        {
+            return $this->hasOne(
+                JadwalApproval::class,
+                'jadwal_id',
+                'id'
+            );
+        }
 }
