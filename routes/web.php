@@ -8,6 +8,7 @@ use App\Http\Controllers\KegiatanController;
 use App\Http\Controllers\HariOperasionalController;
 use App\Http\Controllers\JadwalBulananController;
 use App\Http\Controllers\LaporanJadwalController;
+use App\Http\Controllers\RiwayatJadwalController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -140,6 +141,12 @@ Route::get('/laporan-jadwal', [
     LaporanJadwalController::class,
     'index',
 ])->name('laporan-jadwal.index');
+
+
+Route::get(
+    '/riwayat-jadwal',
+    [RiwayatJadwalController::class, 'index']
+)->name('riwayat-jadwal.index');
 
     /*
     |--------------------------------------------------------------------------

@@ -616,7 +616,7 @@ public function update(
     }
 
     return redirect()
-        ->route('jadwal.edit', $jadwal)
+        ->route('jadwal.index', $jadwal)
         ->with(
             'success',
             'Perubahan jadwal berhasil disimpan.'

@@ -88,7 +88,7 @@
             border-radius:18px;
             background-image:
                 linear-gradient(rgba(23,63,53,.25),rgba(23,63,53,.25)),
-                url('{{ asset('storage/backcover3.png') }}');
+                url('{{ asset('storage/backcover4.png') }}');
             background-size:cover;
             background-position:center;
             background-repeat:no-repeat;

@@ -377,7 +377,7 @@
 
 <div class="container-fluid jadwal-edit-page">
 
-    <div class="mb-4">
+    <div class="mb-4" style="color: #ffffff;">
         <h4 class="page-title">
             Edit Jadwal Bulanan
         </h4>
@@ -399,17 +399,7 @@
         </div>
     @endif
 
-    @if (session('success'))
-        <div class="alert alert-success border-0 shadow-sm mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
 
-    @if (session('error'))
-        <div class="alert alert-danger border-0 shadow-sm mb-4">
-            {{ session('error') }}
-        </div>
-    @endif
 
     {{-- =========================================================
          FORM UTAMA
