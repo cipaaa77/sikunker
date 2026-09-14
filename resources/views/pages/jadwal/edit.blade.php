@@ -4,60 +4,47 @@
 
 @push('styles')
 <style>
-    :root {
-        --jade-primary: #174a43;
-        --jade-secondary: #21665c;
-        --jade-soft: #f4f8f7;
-        --jade-border: #e3ece9;
-        --text-main: #263238;
-        --text-muted: #84919a;
-    }
-
     .jadwal-edit-page {
         padding: 24px 0 40px;
     }
 
-    .jadwal-edit-page .page-header {
-        margin-bottom: 24px;
-    }
-
     .jadwal-edit-page .page-title {
-        color: var(--text-main);
+        color: #263238;
         font-size: 24px;
         font-weight: 700;
         margin-bottom: 6px;
     }
 
     .jadwal-edit-page .page-description {
-        color: var(--text-muted);
+        color: #84919a;
         font-size: 13px;
-        margin-bottom: 0;
+        margin-bottom: 24px;
     }
 
     .jadwal-edit-page .card,
     .jadwal-edit-page .form-footer {
-        border: 1px solid var(--jade-border);
+        background: #fff;
+        border: 1px solid #e3ece9;
         border-radius: 14px;
         box-shadow: 0 4px 16px rgba(23, 74, 67, .04);
         overflow: hidden;
-        background: #fff;
     }
 
     .jadwal-edit-page .card-header {
         padding: 18px 22px;
         background: #fff;
-        border-bottom: 1px solid var(--jade-border);
+        border-bottom: 1px solid #e3ece9;
     }
 
     .jadwal-edit-page .card-header-title {
-        color: var(--jade-primary);
+        color: #174a43;
         font-size: 15px;
         font-weight: 700;
         margin-bottom: 4px;
     }
 
     .jadwal-edit-page .card-header-description {
-        color: var(--text-muted);
+        color: #84919a;
         font-size: 12px;
         margin-bottom: 0;
     }
@@ -73,10 +60,6 @@
         margin-bottom: 8px;
     }
 
-    .jadwal-edit-page .required-mark {
-        color: #c0392b;
-    }
-
     .jadwal-edit-page .form-control,
     .jadwal-edit-page .form-select {
         min-height: 42px;
@@ -88,13 +71,13 @@
     }
 
     .jadwal-edit-page textarea.form-control {
-        min-height: 100px;
+        min-height: 115px;
         resize: vertical;
     }
 
     .jadwal-edit-page .form-control:focus,
     .jadwal-edit-page .form-select:focus {
-        border-color: var(--jade-secondary);
+        border-color: #21665c;
         box-shadow: 0 0 0 3px rgba(33, 102, 92, .09);
     }
 
@@ -103,10 +86,11 @@
         background: #edf1f2;
         color: #65747c;
         opacity: 1;
+        cursor: not-allowed;
     }
 
     .jadwal-edit-page .form-text {
-        color: var(--text-muted);
+        color: #84919a;
         font-size: 11px;
         margin-top: 6px;
     }
@@ -139,6 +123,11 @@
         color: #946500;
     }
 
+    .jadwal-edit-page .status-ditolak {
+        background: #fde2e2;
+        color: #a52a2a;
+    }
+
     .jadwal-edit-page .status-disetujui {
         background: #dff2e7;
         color: #23734a;
@@ -154,6 +143,16 @@
         line-height: 1.6;
     }
 
+    .jadwal-edit-page .warning-alert {
+        padding: 13px 15px;
+        background: #fff5e6;
+        border: 1px solid #f2dfbd;
+        color: #8b641d;
+        border-radius: 10px;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
     .jadwal-edit-page .detail-card {
         background: #fff;
         border: 1px solid #e2ebe8;
@@ -162,10 +161,14 @@
         overflow: hidden;
     }
 
+    .jadwal-edit-page .detail-card:last-child {
+        margin-bottom: 0;
+    }
+
     .jadwal-edit-page .detail-card-header {
         display: flex;
-        align-items: center;
         justify-content: space-between;
+        align-items: center;
         gap: 12px;
         padding: 14px 17px;
         background: #f8fbfa;
@@ -179,7 +182,7 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        background: var(--jade-primary);
+        background: #174a43;
         color: #fff;
         border-radius: 8px;
         font-size: 12px;
@@ -187,14 +190,14 @@
     }
 
     .jadwal-edit-page .detail-title {
-        color: var(--jade-primary);
+        color: #174a43;
         font-size: 13px;
         font-weight: 700;
         margin-bottom: 2px;
     }
 
     .jadwal-edit-page .detail-subtitle {
-        color: var(--text-muted);
+        color: #84919a;
         font-size: 11px;
         margin-bottom: 0;
     }
@@ -211,8 +214,8 @@
     }
 
     .jadwal-edit-page .btn-jade {
-        background: var(--jade-primary);
-        border-color: var(--jade-primary);
+        background: #174a43;
+        border-color: #174a43;
         color: #fff;
     }
 
@@ -225,13 +228,25 @@
     .jadwal-edit-page .btn-outline-jade {
         background: #fff;
         border: 1px solid #bcd6cf;
-        color: var(--jade-primary);
+        color: #174a43;
     }
 
     .jadwal-edit-page .btn-outline-jade:hover {
         background: #edf6f3;
-        border-color: var(--jade-secondary);
-        color: var(--jade-primary);
+        border-color: #21665c;
+        color: #174a43;
+    }
+
+    .jadwal-edit-page .btn-approve {
+        background: #23734a;
+        border-color: #23734a;
+        color: #fff;
+    }
+
+    .jadwal-edit-page .btn-reject {
+        background: #c0392b;
+        border-color: #c0392b;
+        color: #fff;
     }
 
     .jadwal-edit-page .btn-remove-detail {
@@ -242,39 +257,13 @@
         font-size: 11px;
     }
 
-    .jadwal-edit-page .btn-remove-detail:hover {
-        background: #ffe8e8;
-        color: #982c2c;
-    }
-
-    .jadwal-edit-page .empty-detail {
-        padding: 35px 20px;
-        text-align: center;
-        border: 1px dashed #cbded8;
-        border-radius: 10px;
-        background: #fafcfb;
-        color: var(--text-muted);
-    }
-
-    .jadwal-edit-page .empty-detail-title {
-        color: #5c7770;
-        font-size: 13px;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-
-    .jadwal-edit-page .empty-detail-description {
-        font-size: 12px;
-        margin-bottom: 0;
-    }
-
     .jadwal-edit-page .form-footer {
         padding: 20px 22px;
         margin-top: 20px;
     }
 
     .jadwal-edit-page .footer-note {
-        color: var(--text-muted);
+        color: #84919a;
         font-size: 11px;
         margin-bottom: 0;
     }
@@ -286,27 +275,7 @@
         flex-wrap: wrap;
     }
 
-    .jadwal-edit-page .btn-approve {
-        background: #23734a;
-        border-color: #23734a;
-        color: #fff;
-    }
-
-    .jadwal-edit-page .btn-approve:hover {
-        background: #1b5b3a;
-        border-color: #1b5b3a;
-        color: #fff;
-    }
-
     @media (max-width: 767.98px) {
-        .jadwal-edit-page {
-            padding-top: 16px;
-        }
-
-        .jadwal-edit-page .page-title {
-            font-size: 21px;
-        }
-
         .jadwal-edit-page .card-header,
         .jadwal-edit-page .card-body,
         .jadwal-edit-page .form-footer {
@@ -315,7 +284,6 @@
 
         .jadwal-edit-page .footer-actions {
             justify-content: stretch;
-            width: 100%;
         }
 
         .jadwal-edit-page .footer-actions .btn {
@@ -328,25 +296,41 @@
 @section('content')
 
 @php
-    $status = strtolower($jadwal->status ?? 'draft');
+    $status = strtolower((string) ($jadwal->status ?? 'draft'));
 
-    $role = strtolower(
-        auth()->user()->role
-        ?? auth()->user()->nama_role
+    $user = auth()->user();
+
+    $role = strtolower((string) (
+        $user->role
+        ?? $user->nama_role
         ?? ''
-    );
+    ));
+
+    $isAdmin = in_array($role, [
+        'admin',
+        'administrator',
+        'superadmin',
+    ], true);
 
     $isCoordinator = in_array($role, [
         'koordinator',
         'coordinator',
-        'admin',
-        'superadmin',
-    ]);
+    ], true);
 
-    // Bisa diedit & disimpan selama status BUKAN disetujui.
-    // (Halaman ini pun sudah tidak akan dicapai saat disetujui,
-    // karena method edit() di controller meredirect lebih dulu.)
-    $canEdit = in_array($status, ['draft', 'diajukan']);
+    $canEditDetail = $isAdmin && in_array($status, [
+        'draft',
+        'ditolak',
+    ], true);
+
+    $canEditCatatan = ($isAdmin || $isCoordinator)
+        && $status !== 'disetujui';
+
+    $canSubmit = $isAdmin && in_array($status, [
+        'draft',
+        'ditolak',
+    ], true);
+
+    $canApprove = $isCoordinator && $status === 'diajukan';
 
     $namaBulan = [
         1 => 'Januari',
@@ -373,11 +357,27 @@
         ($namaBulan[(int) $jadwal->bulan] ?? '-') .
         ' ' .
         $jadwal->tahun;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Catatan yang ditampilkan
+    |--------------------------------------------------------------------------
+    |
+    | Prioritas:
+    | 1. Input old jika validasi gagal
+    | 2. Catatan jadwal utama
+    | 3. Catatan approval
+    |--------------------------------------------------------------------------
+    */
+
+    $catatanTersimpan = $jadwal->catatan
+        ?? optional($jadwal->approval)->catatan
+        ?? '';
 @endphp
 
 <div class="container-fluid jadwal-edit-page">
 
-    <div class="page-header">
+    <div class="mb-4">
         <h4 class="page-title">
             Edit Jadwal Bulanan
         </h4>
@@ -411,7 +411,9 @@
         </div>
     @endif
 
-    {{-- FORM EDIT JADWAL --}}
+    {{-- =========================================================
+         FORM UTAMA
+    ========================================================== --}}
     <form
         id="jadwalEditForm"
         action="{{ route('jadwal.update', $jadwal->id) }}"
@@ -420,7 +422,17 @@
         @csrf
         @method('PUT')
 
-        {{-- INFORMASI UTAMA --}}
+        {{-- save = simpan biasa, submit = beri ke koordinator --}}
+        <input
+            type="hidden"
+            name="action"
+            id="jadwalAction"
+            value="save"
+        >
+
+        {{-- =====================================================
+             INFORMASI JADWAL
+        ====================================================== --}}
         <div class="card mb-4">
 
             <div class="card-header">
@@ -438,17 +450,18 @@
                 <div class="row g-4">
 
                     <div class="col-md-6">
-                        <label for="periode" class="form-label">
+                        <label
+                            for="periode"
+                            class="form-label"
+                        >
                             Periode Jadwal
-                            <span class="required-mark">*</span>
                         </label>
 
                         <input
                             type="month"
                             id="periode"
-                            name="periode"
                             class="form-control"
-                            value="{{ old('periode', $periodeJadwal) }}"
+                            value="{{ $periodeJadwal }}"
                             disabled
                         >
 
@@ -470,43 +483,69 @@
                     </div>
 
                     <div class="col-12">
-                        <label for="catatan" class="form-label">
+                        <label
+                            for="catatan"
+                            class="form-label"
+                        >
                             Catatan Jadwal
                             <span class="text-muted fw-normal">
                                 (Opsional)
                             </span>
                         </label>
 
-                        {{-- Catatan ini selalu bisa diisi/diubah, tidak readonly. --}}
                         <textarea
                             id="catatan"
                             name="catatan"
                             rows="4"
                             class="form-control"
-                            placeholder="Tambahkan catatan umum untuk jadwal bulan ini..."
-                        >{{ old('catatan', $jadwal->catatan) }}</textarea>
+                            placeholder="Tambahkan catatan umum atau alasan penolakan..."
+                            @disabled(!$canEditCatatan)
+                        >{{ old('catatan', $catatanTersimpan) }}</textarea>
+
+                        @if ($canEditCatatan)
+                            <div class="form-text">
+                                Catatan akan ikut tersimpan ketika jadwal
+                                disimpan atau diajukan kepada koordinator.
+                            </div>
+                        @else
+                            <div class="form-text">
+                                Jadwal sudah disetujui sehingga catatan dikunci.
+                            </div>
+                        @endif
                     </div>
 
                     <div class="col-12">
 
                         @if ($status === 'draft')
+
                             <div class="info-alert">
                                 Jadwal masih berstatus draft.
-                                Silakan periksa seluruh detail kegiatan.
-                                Jika sudah benar, klik
-                                <strong>Beri ke Koordinator</strong>.
+                                Periksa seluruh detail sebelum mengajukan
+                                jadwal kepada koordinator.
                             </div>
+
                         @elseif ($status === 'diajukan')
+
                             <div class="info-alert">
-                                Jadwal sudah diajukan dan sedang menunggu
-                                persetujuan koordinator. Anda masih dapat
-                                memperbarui informasi jadwal sebelum disetujui.
+                                Jadwal sedang menunggu pemeriksaan koordinator.
+                                Detail kegiatan dikunci.
                             </div>
+
+                        @elseif ($status === 'ditolak')
+
+                            <div class="warning-alert">
+                                Jadwal ditolak oleh koordinator.
+                                Perbaiki detail dan catatan, kemudian
+                                ajukan kembali kepada koordinator.
+                            </div>
+
                         @elseif ($status === 'disetujui')
+
                             <div class="info-alert">
-                                Jadwal sudah disetujui oleh koordinator
-                                dan tidak dapat diubah lagi.
+                                Jadwal sudah disetujui oleh koordinator.
+                                Seluruh data tidak dapat diubah.
                             </div>
+
                         @endif
 
                     </div>
@@ -516,7 +555,9 @@
             </div>
         </div>
 
-        {{-- DETAIL KEGIATAN --}}
+        {{-- =========================================================
+             DETAIL KEGIATAN
+        ========================================================== --}}
         <div class="card mb-4">
 
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -531,7 +572,7 @@
                     </p>
                 </div>
 
-                @if ($canEdit)
+                @if ($canEditDetail)
                     <button
                         type="button"
                         id="btnTambahDetail"
@@ -545,38 +586,246 @@
 
             <div class="card-body">
 
-                <div id="detailContainer"></div>
+                <div id="detailContainer">
 
-                <div
-                    id="emptyDetail"
-                    class="empty-detail"
-                    style="display: none;"
-                >
-                    <div class="empty-detail-title">
-                        Belum ada detail jadwal
-                    </div>
+                    @forelse ($jadwal->details as $index => $detail)
 
-                    <p class="empty-detail-description">
-                        Klik tombol "Tambah Detail" untuk menambahkan kegiatan.
-                    </p>
+                        <div class="detail-card">
+
+                            <div class="detail-card-header">
+
+                                <div class="d-flex align-items-center gap-2">
+
+                                    <div class="detail-number">
+                                        {{ $index + 1 }}
+                                    </div>
+
+                                    <div>
+                                        <div class="detail-title">
+                                            Detail Kegiatan
+                                        </div>
+
+                                        <p class="detail-subtitle">
+                                            Informasi kegiatan Posyandu
+                                        </p>
+                                    </div>
+
+                                </div>
+
+                                @if ($canEditDetail)
+                                    <button
+                                        type="button"
+                                        class="btn btn-remove-detail btnHapusDetail"
+                                    >
+                                        Hapus
+                                    </button>
+                                @endif
+
+                            </div>
+
+                            <div class="detail-card-body">
+
+                                <input
+                                    type="hidden"
+                                    name="details[{{ $index }}][id]"
+                                    value="{{ $detail->id }}"
+                                >
+
+                                <div class="row g-3">
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            Posyandu
+                                        </label>
+
+                                        <select
+                                            name="details[{{ $index }}][posyandu_id]"
+                                            class="form-select"
+                                            required
+                                            @disabled(!$canEditDetail)
+                                        >
+                                            <option value="">
+                                                Pilih Posyandu
+                                            </option>
+
+                                            @foreach ($posyandus as $posyandu)
+                                                <option
+                                                    value="{{ $posyandu->id }}"
+                                                    @selected(
+                                                        (string) $detail->posyandu_id ===
+                                                        (string) $posyandu->id
+                                                    )
+                                                >
+                                                    {{ $posyandu->nama_posyandu }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            Kegiatan
+                                        </label>
+
+                                        <select
+                                            name="details[{{ $index }}][kegiatan_id]"
+                                            class="form-select"
+                                            required
+                                            @disabled(!$canEditDetail)
+                                        >
+                                            <option value="">
+                                                Pilih Kegiatan
+                                            </option>
+
+                                            @foreach ($kegiatans as $kegiatan)
+                                                <option
+                                                    value="{{ $kegiatan->id }}"
+                                                    @selected(
+                                                        (string) $detail->kegiatan_id ===
+                                                        (string) $kegiatan->id
+                                                    )
+                                                >
+                                                    {{ $kegiatan->nama_kegiatan }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            Tanggal Mulai
+                                        </label>
+
+                                        <input
+                                            type="date"
+                                            name="details[{{ $index }}][tgl_mulai]"
+                                            class="form-control"
+                                            value="{{ old(
+                                                'details.' . $index . '.tgl_mulai',
+                                                substr((string) $detail->tgl_mulai, 0, 10)
+                                            ) }}"
+                                            required
+                                            @disabled(!$canEditDetail)
+                                        >
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            Tanggal Selesai
+                                        </label>
+
+                                        <input
+                                            type="date"
+                                            name="details[{{ $index }}][tgl_selesai]"
+                                            class="form-control"
+                                            value="{{ old(
+                                                'details.' . $index . '.tgl_selesai',
+                                                substr((string) $detail->tgl_selesai, 0, 10)
+                                            ) }}"
+                                            required
+                                            @disabled(!$canEditDetail)
+                                        >
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            Jam Mulai
+                                        </label>
+
+                                        <input
+                                            type="time"
+                                            name="details[{{ $index }}][jam_mulai]"
+                                            class="form-control"
+                                            value="{{ old(
+                                                'details.' . $index . '.jam_mulai',
+                                                substr((string) $detail->jam_mulai, 0, 5)
+                                            ) }}"
+                                            required
+                                            @disabled(!$canEditDetail)
+                                        >
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            Jam Selesai
+                                        </label>
+
+                                        <input
+                                            type="time"
+                                            name="details[{{ $index }}][jam_selesai]"
+                                            class="form-control"
+                                            value="{{ old(
+                                                'details.' . $index . '.jam_selesai',
+                                                substr((string) $detail->jam_selesai, 0, 5)
+                                            ) }}"
+                                            required
+                                            @disabled(!$canEditDetail)
+                                        >
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label">
+                                            Keterangan
+                                        </label>
+
+                                        <textarea
+                                            name="details[{{ $index }}][keterangan]"
+                                            class="form-control"
+                                            rows="3"
+                                            placeholder="Tambahkan keterangan kegiatan..."
+                                            @disabled(!$canEditDetail)
+                                        >{{ old(
+                                            'details.' . $index . '.keterangan',
+                                            $detail->keterangan
+                                        ) }}</textarea>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    @empty
+
+                        <div
+                            id="emptyDetail"
+                            class="text-center py-5"
+                        >
+                            <div class="text-muted">
+                                Belum ada detail kegiatan.
+                            </div>
+                        </div>
+
+                    @endforelse
+
                 </div>
-
             </div>
         </div>
 
-        {{-- FOOTER FORM EDIT --}}
+        {{-- =========================================================
+             FOOTER ADMIN
+        ========================================================== --}}
         <div class="form-footer">
 
             <div class="row align-items-center g-3">
 
                 <div class="col-md-6">
                     <p class="footer-note">
-                        Pastikan seluruh data sudah benar sebelum disimpan
-                        atau diberikan kepada koordinator.
+
+                        @if ($status === 'draft')
+                            Jadwal masih dapat diperbaiki sebelum diajukan.
+                        @elseif ($status === 'ditolak')
+                            Perbaiki jadwal kemudian ajukan kembali kepada koordinator.
+                        @elseif ($status === 'diajukan')
+                            Jadwal sedang diperiksa oleh koordinator.
+                        @elseif ($status === 'disetujui')
+                            Jadwal sudah disetujui dan dikunci.
+                        @endif
+
                     </p>
                 </div>
 
                 <div class="col-md-6">
+
                     <div class="footer-actions">
 
                         <a
@@ -586,7 +835,7 @@
                             Kembali
                         </a>
 
-                        @if ($canEdit)
+                        @if ($canEditDetail)
 
                             <button
                                 type="submit"
@@ -596,7 +845,8 @@
                                 Simpan Perubahan
                             </button>
 
-                            @if ($status === 'draft')
+                            @if ($canSubmit)
+
                                 <button
                                     type="button"
                                     id="btnKoordinator"
@@ -604,6 +854,7 @@
                                 >
                                     Beri ke Koordinator
                                 </button>
+
                             @endif
 
                         @elseif ($status === 'disetujui')
@@ -622,15 +873,16 @@
                 </div>
 
             </div>
-
         </div>
 
     </form>
 
-    {{-- FORM APPROVE TERPISAH --}}
-    {{-- Penting: tidak menggunakan PUT agar route approve menerima POST --}}
-    @if ($isCoordinator && $status === 'diajukan')
+    {{-- =========================================================
+         FORM KOORDINATOR
+    ========================================================== --}}
+    @if ($canApprove)
 
+        {{-- FORM APPROVE --}}
         <form
             id="formApproveJadwal"
             action="{{ route('jadwal.approve', $jadwal->id) }}"
@@ -640,18 +892,44 @@
             @csrf
         </form>
 
-        <div class="form-footer mt-3">
+        {{-- FORM REJECT --}}
+        <form
+            id="formRejectJadwal"
+            action="{{ route('jadwal.reject', $jadwal->id) }}"
+            method="POST"
+            class="d-none"
+        >
+            @csrf
+
+            <input
+                type="hidden"
+                name="catatan_koordinator"
+                id="catatanPenolakan"
+            >
+        </form>
+
+        <div class="form-footer">
 
             <div class="row align-items-center g-3">
 
                 <div class="col-md-6">
                     <p class="footer-note">
-                        Setelah disetujui, status jadwal akan berubah menjadi disetujui.
+                        Koordinator dapat menyetujui atau menolak jadwal.
+                        Catatan wajib diisi jika jadwal ditolak.
                     </p>
                 </div>
 
                 <div class="col-md-6">
+
                     <div class="footer-actions">
+
+                        <button
+                            type="button"
+                            id="btnTolak"
+                            class="btn btn-reject"
+                        >
+                            Tolak Jadwal
+                        </button>
 
                         <button
                             type="button"
@@ -665,7 +943,6 @@
                 </div>
 
             </div>
-
         </div>
 
     @endif
@@ -676,56 +953,61 @@
 
 @push('scripts')
 
-{{-- Pastikan SweetAlert2 tersedia --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
     const form = document.getElementById('jadwalEditForm');
-    const detailContainer = document.getElementById('detailContainer');
-    const emptyDetail = document.getElementById('emptyDetail');
-    const btnTambahDetail = document.getElementById('btnTambahDetail');
-    const btnSimpan = document.getElementById('btnSimpan');
-    const btnKoordinator = document.getElementById('btnKoordinator');
-    const btnSetujui = document.getElementById('btnSetujui');
-    const formApproveJadwal = document.getElementById('formApproveJadwal');
 
-    if (!form || !detailContainer) {
-        return;
-    }
+    const detailContainer =
+        document.getElementById('detailContainer');
 
-    const posyandus = @json($posyandus ?? []);
-    const kegiatans = @json($kegiatans ?? []);
-    const existingDetails = @json($jadwal->details ?? []);
-    const oldDetails = @json(old('details', []));
-    const canEdit = @json($canEdit);
+    const btnTambahDetail =
+        document.getElementById('btnTambahDetail');
 
-    let detailIndex = 0;
+    const btnSimpan =
+        document.getElementById('btnSimpan');
 
-    function showAlert(options) {
-        if (typeof Swal !== 'undefined') {
-            return Swal.fire(options);
-        }
+    const btnKoordinator =
+        document.getElementById('btnKoordinator');
 
-        if (options.showCancelButton) {
-            const confirmed = window.confirm(
-                options.title + '\n\n' + (options.text || '')
-            );
+    const jadwalAction =
+        document.getElementById('jadwalAction');
 
-            return Promise.resolve({
-                isConfirmed: confirmed
-            });
-        }
+    const btnTolak =
+        document.getElementById('btnTolak');
 
-        window.alert(
-            options.title + '\n\n' + (options.text || '')
-        );
+    const btnSetujui =
+        document.getElementById('btnSetujui');
 
-        return Promise.resolve({
-            isConfirmed: true
-        });
-    }
+    const formApproveJadwal =
+        document.getElementById('formApproveJadwal');
+
+    const formRejectJadwal =
+        document.getElementById('formRejectJadwal');
+
+    const catatan =
+        document.getElementById('catatan');
+
+    const catatanPenolakan =
+        document.getElementById('catatanPenolakan');
+
+    const canEditDetail =
+        @json($canEditDetail);
+
+    const canSubmit =
+        @json($canSubmit);
+
+    const posyandus =
+        @json($posyandus ?? []);
+
+    const kegiatans =
+        @json($kegiatans ?? []);
+
+    let detailIndex = detailContainer
+        ? detailContainer.querySelectorAll('.detail-card').length
+        : 0;
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -736,65 +1018,13 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/'/g, '&#039;');
     }
 
-    function normalizeDate(value) {
-        if (!value) {
-            return '';
-        }
+    function buildOptions(items, valueKey, labelKey) {
+        let html = '<option value="">Pilih</option>';
 
-        return String(value).substring(0, 10);
-    }
-
-    function normalizeTime(value) {
-        if (!value) {
-            return '';
-        }
-
-        return String(value).substring(0, 5);
-    }
-
-    function getWilayahName(posyandu) {
-        if (!posyandu || !posyandu.wilayah) {
-            return 'Wilayah belum diatur';
-        }
-
-        return (
-            posyandu.wilayah.nama_wilayah ||
-            posyandu.wilayah.nama ||
-            posyandu.wilayah.name ||
-            'Wilayah belum diatur'
-        );
-    }
-
-    function getPosyanduLabel(posyandu) {
-        const nama =
-            posyandu.nama_posyandu ||
-            posyandu.nama ||
-            'Posyandu tanpa nama';
-
-        return nama + ' — ' + getWilayahName(posyandu);
-    }
-
-    function getKegiatanLabel(kegiatan) {
-        return (
-            kegiatan.nama_kegiatan ||
-            kegiatan.nama ||
-            'Kegiatan tanpa nama'
-        );
-    }
-
-    function buildPosyanduOptions(selectedValue = '') {
-        let html = '<option value="">Pilih Posyandu</option>';
-
-        posyandus.forEach(function (posyandu) {
-
-            const selected =
-                String(selectedValue) === String(posyandu.id)
-                    ? 'selected'
-                    : '';
-
+        items.forEach(function (item) {
             html += `
-                <option value="${escapeHtml(posyandu.id)}" ${selected}>
-                    ${escapeHtml(getPosyanduLabel(posyandu))}
+                <option value="${escapeHtml(item[valueKey])}">
+                    ${escapeHtml(item[labelKey])}
                 </option>
             `;
         });
@@ -802,90 +1032,42 @@ document.addEventListener('DOMContentLoaded', function () {
         return html;
     }
 
-    function buildKegiatanOptions(selectedValue = '') {
-        let html = '<option value="">Pilih Kegiatan</option>';
+    function updateNumbers() {
+        if (!detailContainer) {
+            return;
+        }
 
-        kegiatans.forEach(function (kegiatan) {
-
-            const selected =
-                String(selectedValue) === String(kegiatan.id)
-                    ? 'selected'
-                    : '';
-
-            html += `
-                <option value="${escapeHtml(kegiatan.id)}" ${selected}>
-                    ${escapeHtml(getKegiatanLabel(kegiatan))}
-                </option>
-            `;
-        });
-
-        return html;
-    }
-
-    function updateEmptyState() {
-        const total =
-            detailContainer.querySelectorAll('.detail-card').length;
-
-        emptyDetail.style.display =
-            total === 0 ? 'block' : 'none';
-    }
-
-    function updateDetailNumbers() {
         detailContainer
             .querySelectorAll('.detail-card')
             .forEach(function (card, index) {
-
                 const number =
                     card.querySelector('.detail-number');
 
                 if (number) {
                     number.textContent = index + 1;
                 }
-
             });
     }
 
-    function addDetail(data = {}) {
+    function addDetail() {
+        if (!canEditDetail || !detailContainer) {
+            return;
+        }
 
         const index = detailIndex++;
 
-        const detailId = data.id || '';
-        const posyanduId = data.posyandu_id || '';
-        const kegiatanId = data.kegiatan_id || '';
-        const detailStatus = data.status || 'terjadwal';
-        const tanggalMulai = normalizeDate(
-            data.tgl_mulai || data.tanggal_mulai
-        );
-        const tanggalSelesai = normalizeDate(
-            data.tgl_selesai || data.tanggal_selesai
-        );
-        const jamMulai = normalizeTime(data.jam_mulai);
-        const jamSelesai = normalizeTime(data.jam_selesai);
-        const keterangan = data.keterangan || '';
-
-        const card = document.createElement('div');
+        const card =
+            document.createElement('div');
 
         card.className = 'detail-card';
 
         card.innerHTML = `
-            <input
-                type="hidden"
-                name="details[${index}][id]"
-                value="${escapeHtml(detailId)}"
-            >
-
-            <input
-                type="hidden"
-                name="details[${index}][status]"
-                value="${escapeHtml(detailStatus)}"
-            >
-
             <div class="detail-card-header">
 
                 <div class="d-flex align-items-center gap-2">
 
                     <div class="detail-number">
-                        1
+                        ${index + 1}
                     </div>
 
                     <div>
@@ -900,18 +1082,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 </div>
 
-                ${
-                    canEdit
-                        ? `
-                            <button
-                                type="button"
-                                class="btn btn-remove-detail btnHapusDetail"
-                            >
-                                Hapus
-                            </button>
-                        `
-                        : ''
-                }
+                <button
+                    type="button"
+                    class="btn btn-remove-detail btnHapusDetail"
+                >
+                    Hapus
+                </button>
 
             </div>
 
@@ -920,124 +1096,96 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="row g-3">
 
                     <div class="col-md-6">
-
                         <label class="form-label">
                             Posyandu
-                            <span class="required-mark">*</span>
                         </label>
 
                         <select
                             name="details[${index}][posyandu_id]"
                             class="form-select"
                             required
-                            ${!canEdit ? 'disabled' : ''}
                         >
-                            ${buildPosyanduOptions(posyanduId)}
+                            ${buildOptions(
+                                posyandus,
+                                'id',
+                                'nama_posyandu'
+                            )}
                         </select>
-
-                        <div class="form-text">
-                            Nama Posyandu ditampilkan bersama wilayah.
-                        </div>
-
                     </div>
 
                     <div class="col-md-6">
-
                         <label class="form-label">
-                            Jenis Kegiatan
-                            <span class="required-mark">*</span>
+                            Kegiatan
                         </label>
 
                         <select
                             name="details[${index}][kegiatan_id]"
                             class="form-select"
                             required
-                            ${!canEdit ? 'disabled' : ''}
                         >
-                            ${buildKegiatanOptions(kegiatanId)}
+                            ${buildOptions(
+                                kegiatans,
+                                'id',
+                                'nama_kegiatan'
+                            )}
                         </select>
-
                     </div>
 
                     <div class="col-md-6">
-
                         <label class="form-label">
                             Tanggal Mulai
-                            <span class="required-mark">*</span>
                         </label>
 
                         <input
                             type="date"
                             name="details[${index}][tgl_mulai]"
-                            class="form-control tanggal-mulai"
-                            value="${escapeHtml(tanggalMulai)}"
+                            class="form-control"
                             required
-                            ${!canEdit ? 'disabled' : ''}
                         >
-
                     </div>
 
                     <div class="col-md-6">
-
                         <label class="form-label">
                             Tanggal Selesai
-                            <span class="required-mark">*</span>
                         </label>
 
                         <input
                             type="date"
                             name="details[${index}][tgl_selesai]"
-                            class="form-control tanggal-selesai"
-                            value="${escapeHtml(tanggalSelesai)}"
+                            class="form-control"
                             required
-                            ${!canEdit ? 'disabled' : ''}
                         >
-
                     </div>
 
                     <div class="col-md-6">
-
                         <label class="form-label">
                             Jam Mulai
-                            <span class="required-mark">*</span>
                         </label>
 
                         <input
                             type="time"
                             name="details[${index}][jam_mulai]"
-                            class="form-control jam-mulai"
-                            value="${escapeHtml(jamMulai)}"
+                            class="form-control"
                             required
-                            ${!canEdit ? 'disabled' : ''}
                         >
-
                     </div>
 
                     <div class="col-md-6">
-
                         <label class="form-label">
                             Jam Selesai
-                            <span class="required-mark">*</span>
                         </label>
 
                         <input
                             type="time"
                             name="details[${index}][jam_selesai]"
-                            class="form-control jam-selesai"
-                            value="${escapeHtml(jamSelesai)}"
+                            class="form-control"
                             required
-                            ${!canEdit ? 'disabled' : ''}
                         >
-
                     </div>
 
                     <div class="col-12">
-
                         <label class="form-label">
                             Keterangan
-                            <span class="text-muted fw-normal">
-                                (Opsional)
-                            </span>
                         </label>
 
                         <textarea
@@ -1045,257 +1193,133 @@ document.addEventListener('DOMContentLoaded', function () {
                             class="form-control"
                             rows="3"
                             placeholder="Tambahkan keterangan kegiatan..."
-                            ${!canEdit ? 'disabled' : ''}
-                        >${escapeHtml(keterangan)}</textarea>
-
+                        ></textarea>
                     </div>
 
                 </div>
-
             </div>
         `;
 
         detailContainer.appendChild(card);
 
-        const btnHapusDetail =
-            card.querySelector('.btnHapusDetail');
+        const emptyDetail =
+            document.getElementById('emptyDetail');
 
-        const tanggalMulaiInput =
-            card.querySelector('.tanggal-mulai');
-
-        const tanggalSelesaiInput =
-            card.querySelector('.tanggal-selesai');
-
-        const jamMulaiInput =
-            card.querySelector('.jam-mulai');
-
-        const jamSelesaiInput =
-            card.querySelector('.jam-selesai');
-
-        if (btnHapusDetail) {
-
-            btnHapusDetail.addEventListener('click', function () {
-
-                card.remove();
-
-                updateDetailNumbers();
-                updateEmptyState();
-
-            });
-
+        if (emptyDetail) {
+            emptyDetail.remove();
         }
 
-        if (tanggalMulaiInput && tanggalSelesaiInput) {
-
-            tanggalMulaiInput.addEventListener('change', function () {
-
-                tanggalSelesaiInput.min = this.value;
-
-                if (
-                    tanggalSelesaiInput.value &&
-                    tanggalSelesaiInput.value < this.value
-                ) {
-                    tanggalSelesaiInput.value = this.value;
-                }
-
-            });
-
-            if (tanggalMulaiInput.value) {
-                tanggalSelesaiInput.min =
-                    tanggalMulaiInput.value;
-            }
-
-        }
-
-        if (jamMulaiInput && jamSelesaiInput) {
-
-            jamMulaiInput.addEventListener('change', function () {
-                jamSelesaiInput.min = this.value;
-            });
-
-            if (jamMulaiInput.value) {
-                jamSelesaiInput.min =
-                    jamMulaiInput.value;
-            }
-
-        }
-
-        updateDetailNumbers();
-        updateEmptyState();
-    }
-
-    function validateDetails() {
-
-        const cards =
-            detailContainer.querySelectorAll('.detail-card');
-
-        if (cards.length === 0) {
-
-            showAlert({
-                icon: 'warning',
-                title: 'Detail Belum Ada',
-                text: 'Minimal tambahkan satu detail kegiatan.',
-                confirmButtonText: 'Mengerti',
-                confirmButtonColor: '#174a43'
-            });
-
-            return false;
-        }
-
-        for (const card of cards) {
-
-            const posyandu =
-                card.querySelector('[name*="[posyandu_id]"]').value;
-
-            const kegiatan =
-                card.querySelector('[name*="[kegiatan_id]"]').value;
-
-            const tanggalMulai =
-                card.querySelector('.tanggal-mulai').value;
-
-            const tanggalSelesai =
-                card.querySelector('.tanggal-selesai').value;
-
-            const jamMulai =
-                card.querySelector('.jam-mulai').value;
-
-            const jamSelesai =
-                card.querySelector('.jam-selesai').value;
-
-            if (!posyandu || !kegiatan) {
-
-                showAlert({
-                    icon: 'warning',
-                    title: 'Data Belum Lengkap',
-                    text: 'Posyandu dan jenis kegiatan wajib diisi.',
-                    confirmButtonText: 'Periksa Data',
-                    confirmButtonColor: '#174a43'
-                });
-
-                return false;
-            }
-
-            if (
-                tanggalMulai &&
-                tanggalSelesai &&
-                tanggalSelesai < tanggalMulai
-            ) {
-
-                showAlert({
-                    icon: 'warning',
-                    title: 'Tanggal Tidak Valid',
-                    text: 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
-                    confirmButtonText: 'Periksa Data',
-                    confirmButtonColor: '#174a43'
-                });
-
-                return false;
-            }
-
-            if (
-                jamMulai &&
-                jamSelesai &&
-                jamSelesai <= jamMulai
-            ) {
-
-                showAlert({
-                    icon: 'warning',
-                    title: 'Jam Tidak Valid',
-                    text: 'Jam selesai harus lebih besar dari jam mulai.',
-                    confirmButtonText: 'Periksa Data',
-                    confirmButtonColor: '#174a43'
-                });
-
-                return false;
-            }
-        }
-
-        return true;
+        updateNumbers();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Muat Detail Lama
-    |--------------------------------------------------------------------------
-    */
-
-    if (Array.isArray(oldDetails) && oldDetails.length > 0) {
-
-        oldDetails.forEach(function (detail) {
-            addDetail(detail);
-        });
-
-    } else if (
-        Array.isArray(existingDetails) &&
-        existingDetails.length > 0
-    ) {
-
-        existingDetails.forEach(function (detail) {
-            addDetail(detail);
-        });
-
-    } else if (canEdit) {
-
-        addDetail();
-
-    } else {
-
-        emptyDetail.style.display = 'block';
-
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Tambah Detail
+    | Tambah detail
     |--------------------------------------------------------------------------
     */
 
     if (btnTambahDetail) {
-
         btnTambahDetail.addEventListener('click', function () {
             addDetail();
         });
-
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Simpan Perubahan
+    | Hapus detail
     |--------------------------------------------------------------------------
     */
 
-    form.addEventListener('submit', function (event) {
+    if (detailContainer) {
+        detailContainer.addEventListener('click', function (event) {
 
-        if (!validateDetails()) {
-            event.preventDefault();
-            return;
-        }
+            const button =
+                event.target.closest('.btnHapusDetail');
 
-        if (btnSimpan) {
-            btnSimpan.disabled = true;
-            btnSimpan.innerText = 'Menyimpan...';
-        }
+            if (!button) {
+                return;
+            }
 
-    });
+            const card =
+                button.closest('.detail-card');
+
+            if (!card) {
+                return;
+            }
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Hapus detail?',
+                text: 'Detail kegiatan ini akan dihapus dari form.',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#c0392b',
+                cancelButtonColor: '#6c757d'
+            }).then(function (result) {
+
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                card.remove();
+
+                updateNumbers();
+            });
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Submit form biasa
+    |--------------------------------------------------------------------------
+    */
+
+    if (form) {
+        form.addEventListener('submit', function (event) {
+
+            if (!canEditDetail) {
+                event.preventDefault();
+                return;
+            }
+
+            /*
+            | Jika tidak ditentukan, default adalah save.
+            */
+
+            if (jadwalAction && !jadwalAction.value) {
+                jadwalAction.value = 'save';
+            }
+
+            if (btnSimpan) {
+                btnSimpan.disabled = true;
+                btnSimpan.innerText = 'Menyimpan...';
+            }
+        });
+    }
 
     /*
     |--------------------------------------------------------------------------
     | Beri ke Koordinator
     |--------------------------------------------------------------------------
+    |
+    | PENTING:
+    | Jangan mengubah action ke jadwal.submit.
+    | Form tetap dikirim ke jadwal.update agar:
+    | - catatan tersimpan
+    | - detail tersimpan
+    | - status menjadi diajukan
+    |--------------------------------------------------------------------------
     */
 
-    if (btnKoordinator) {
+    if (btnKoordinator && form && jadwalAction && canSubmit) {
 
         btnKoordinator.addEventListener('click', function () {
 
-            if (!validateDetails()) {
-                return;
-            }
-
-            showAlert({
+            Swal.fire({
                 icon: 'question',
                 title: 'Beri ke Koordinator?',
-                text: 'Jadwal akan dikirim kepada koordinator untuk diperiksa.',
+                text: 'Perubahan akan disimpan dan jadwal dikirim kepada koordinator.',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, Berikan',
                 cancelButtonText: 'Batal',
@@ -1307,35 +1331,92 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                const methodInput =
-                    form.querySelector('input[name="_method"]');
+                /*
+                |--------------------------------------------------------------------------
+                | Ubah aksi menjadi submit
+                |--------------------------------------------------------------------------
+                */
 
-                if (methodInput) {
-                    methodInput.remove();
-                }
+                jadwalAction.value = 'submit';
 
-                form.action =
-                    "{{ route('jadwal.submit', $jadwal->id) }}";
-
-                form.method = 'POST';
+                /*
+                |--------------------------------------------------------------------------
+                | Form tetap menggunakan:
+                | PUT jadwal.update
+                |--------------------------------------------------------------------------
+                */
 
                 btnKoordinator.disabled = true;
                 btnKoordinator.innerText = 'Mengirim...';
 
                 form.submit();
-
             });
-
         });
-
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Setujui Jadwal Oleh Koordinator
+    | Tolak Jadwal
     |--------------------------------------------------------------------------
-    | Form approve terpisah dan method POST.
-    | Tidak memakai formmethod PUT dari form edit.
+    |
+    | Catatan diambil dari textarea utama.
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        btnTolak &&
+        formRejectJadwal &&
+        catatan &&
+        catatanPenolakan
+    ) {
+
+        btnTolak.addEventListener('click', function () {
+
+            const isiCatatan =
+                catatan.value.trim();
+
+            if (!isiCatatan) {
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Catatan wajib diisi',
+                    text: 'Isi Catatan Jadwal terlebih dahulu sebelum menolak jadwal.'
+                });
+
+                catatan.focus();
+
+                return;
+            }
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Tolak Jadwal?',
+                text: 'Jadwal akan dikembalikan kepada admin.',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Tolak',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#c0392b',
+                cancelButtonColor: '#6c757d'
+            }).then(function (result) {
+
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                catatanPenolakan.value =
+                    isiCatatan;
+
+                btnTolak.disabled = true;
+                btnTolak.innerText = 'Menolak...';
+
+                formRejectJadwal.submit();
+            });
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Setujui Jadwal
     |--------------------------------------------------------------------------
     */
 
@@ -1343,10 +1424,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         btnSetujui.addEventListener('click', function () {
 
-            showAlert({
+            Swal.fire({
                 icon: 'question',
                 title: 'Setujui Jadwal?',
-                text: 'Jadwal yang disetujui akan berubah menjadi status disetujui.',
+                text: 'Jadwal yang disetujui tidak dapat diubah lagi.',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, Setujui',
                 cancelButtonText: 'Batal',
@@ -1362,13 +1443,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 btnSetujui.innerText = 'Menyetujui...';
 
                 formApproveJadwal.submit();
-
             });
-
         });
-
     }
 
 });
 </script>
+
 @endpush

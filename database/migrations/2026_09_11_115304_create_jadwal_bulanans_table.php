@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('status', [
                 'draft',
                 'diajukan',
+                'ditolak',
                 'disetujui',
             ])->default('draft');
 

@@ -24,12 +24,14 @@ return new class extends Migration
             $table->enum('status_lama', [
                 'draft',
                 'diajukan',
+                'ditolak',
                 'disetujui',
             ])->nullable();
 
             $table->enum('status_baru', [
                 'draft',
                 'diajukan',
+                'ditolak',
                 'disetujui',
             ]);
 

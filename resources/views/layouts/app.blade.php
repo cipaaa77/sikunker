@@ -827,7 +827,8 @@
 
             <div class="menu-title mt-4">Laporan</div>
 
-            <a href="#">
+            <a href="{{ route('laporan-jadwal.index') }}"
+            class="{{ request()->routeIs('laporan-jadwal.*') ? 'active' : '' }}">
                 <i class="fas fa-file-lines"></i>
                 <span>Laporan Jadwal</span>
             </a>

@@ -478,15 +478,24 @@
                     </div>
                 </div>
 
-                <div class="info-item">
-                    <div class="info-icon"><i class="fas fa-calendar-check"></i></div>
-                    <div>
-                        <div class="info-label">Tanggal Disetujui</div>
-                        <div class="info-value">
-                            {{ $jadwal->disetujui_pada ? \Carbon\Carbon::parse($jadwal->disetujui_pada)->format('d-m-Y H:i') : '-' }}
-                        </div>
-                    </div>
-                </div>
+             <div class="info-item">
+    <div class="info-icon">
+        <i class="fas fa-calendar-check"></i>
+    </div>
+
+    <div>
+        <div class="info-label">Tanggal Disetujui</div>
+
+        <div class="info-value">
+            {{ $jadwal->approved_at
+                ? \Carbon\Carbon::parse($jadwal->approved_at)
+                    ->timezone('Asia/Jakarta')
+                    ->format('d-m-Y H:i')
+                : '-' }}
+            WIB
+        </div>
+    </div>
+</div>
             @endif
 
             <div class="info-item">

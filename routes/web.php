@@ -7,6 +7,7 @@ use App\Http\Controllers\PosyanduController;
 use App\Http\Controllers\KegiatanController;
 use App\Http\Controllers\HariOperasionalController;
 use App\Http\Controllers\JadwalBulananController;
+use App\Http\Controllers\LaporanJadwalController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -134,11 +135,11 @@ Route::middleware('auth')->group(function () {
     |
     */
 
-    Route::get('/jadwal/laporan', [
-        JadwalBulananController::class,
-        'laporan',
-    ])->name('jadwal.laporan');
 
+Route::get('/laporan-jadwal', [
+    LaporanJadwalController::class,
+    'index',
+])->name('laporan-jadwal.index');
 
     /*
     |--------------------------------------------------------------------------
@@ -177,6 +178,12 @@ Route::middleware('auth')->group(function () {
         JadwalBulananController::class,
         'approve',
     ])->name('jadwal.approve');
+
+    // Koordinator menolak jadwal
+    Route::post('/jadwal/{jadwal}/reject', [
+        JadwalBulananController::class,
+        'reject',
+    ])->name('jadwal.reject');
 
 
     /*

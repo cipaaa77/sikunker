@@ -24,6 +24,7 @@ return new class extends Migration
             $table->enum('status', [
                 'diajukan',
                 'disetujui',
+                'ditolak',
             ]);
 
             $table->text('catatan')->nullable();
