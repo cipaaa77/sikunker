@@ -771,7 +771,7 @@
             <img src="{{ asset('storage/logo_posyandu.png') }}" alt="Logo Posyandu" class="brand-logo">
 
             <div class="sidebar-brand-text">
-                <div class="sidebar-brand-title">Posyandu Syifa</div>
+                <div class="sidebar-brand-title">Posyandu</div>
                 <div class="sidebar-brand-subtitle">Sistem Penjadwalan</div>
             </div>
         </div>

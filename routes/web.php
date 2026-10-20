@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\JadwalPublikController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WilayahController;
@@ -18,16 +19,17 @@ use Illuminate\Support\Facades\Route;
 | Root Redirect
 |--------------------------------------------------------------------------
 */
+Route::get('/', [
+    JadwalPublikController::class,
+    'landing',
+])->name('public.landing');
 
-Route::get('/', function () {
+Route::get('/jadwal-publik', [
+    JadwalPublikController::class,
+    'jadwal',
+])->name('public.jadwal');
 
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
 
-    return redirect()->route('login');
-
-});
 
 
 /*
