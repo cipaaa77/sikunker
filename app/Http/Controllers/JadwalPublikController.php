@@ -6,6 +6,7 @@ use App\Models\JadwalBulanan;
 use App\Models\Posyandu;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class JadwalPublikController extends Controller
 {
@@ -47,12 +48,40 @@ class JadwalPublikController extends Controller
             ])
             ->orderBy('bulan')
             ->get();
+            
+         
+        $tahunKatalog = now()->year;
+
+        $katalogJadwals = JadwalBulanan::query()
+            ->where('tahun', $tahunKatalog)
+            ->where('status', 'disetujui')
+            ->whereHas('details')
+            ->withCount('details')
+            ->orderBy('bulan')
+            ->get();
+            $namaBulan = [
+                1  => 'Januari',
+                2  => 'Februari',
+                3  => 'Maret',
+                4  => 'April',
+                5  => 'Mei',
+                6  => 'Juni',
+                7  => 'Juli',
+                8  => 'Agustus',
+                9  => 'September',
+                10 => 'Oktober',
+                11 => 'November',
+                12 => 'Desember',
+            ];
 
         return view('public.landing', compact(
             'totalPosyandu',
             'totalJadwal',
             'jadwals',
-            'tahun'
+            'tahun',
+            'katalogJadwals',
+            'tahunKatalog',
+            'namaBulan'
         ));
     }
 
@@ -219,4 +248,81 @@ class JadwalPublikController extends Controller
             'posyanduId'
         ));
     }
+
+    public function downloadPdf(JadwalBulanan $jadwal)
+{
+    /*
+     * Pastikan hanya jadwal yang sudah disetujui
+     * dan memiliki detail yang dapat diunduh.
+     */
+    abort_unless(
+        $jadwal->status === 'disetujui',
+        404
+    );
+
+    abort_unless(
+        $jadwal->tahun === now()->year,
+        404
+    );
+
+    abort_unless(
+        $jadwal->details()->exists(),
+        404
+    );
+
+    /*
+     * Ambil seluruh data jadwal dan detail kegiatan.
+     */
+    $jadwal->load([
+        'pembuat',
+        'approver',
+
+        'details' => function ($query) {
+            $query
+                ->orderBy('tgl_mulai')
+                ->orderBy('jam_mulai');
+        },
+
+        'details.posyandu.wilayah',
+        'details.kegiatan',
+    ]);
+
+    /*
+     * Gunakan Blade PDF yang sudah ada.
+     * Tidak perlu membuat template PDF baru.
+     */
+    $pdf = Pdf::loadView(
+        'pages.jadwal.pdf',
+        compact('jadwal')
+    );
+
+    $pdf->setPaper('a4', 'landscape');
+
+    /*
+     * Nama bulan untuk nama file.
+     */
+    $namaBulan = [
+        1  => 'Januari',
+        2  => 'Februari',
+        3  => 'Maret',
+        4  => 'April',
+        5  => 'Mei',
+        6  => 'Juni',
+        7  => 'Juli',
+        8  => 'Agustus',
+        9  => 'September',
+        10 => 'Oktober',
+        11 => 'November',
+        12 => 'Desember',
+    ];
+
+    $bulan = $namaBulan[(int) $jadwal->bulan];
+
+    return $pdf->download(
+        'Jadwal-Posyandu-' .
+        $bulan . '-' .
+        $jadwal->tahun .
+        '.pdf'
+    );
+}
 }

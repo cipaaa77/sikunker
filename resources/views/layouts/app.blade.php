@@ -833,11 +833,7 @@
                 <span>Laporan Jadwal</span>
             </a>
 
-            <a href="#">
-                <i class="fas fa-clock-rotate-left"></i>
-                <span>Riwayat Jadwal</span>
-            </a>
-
+    
             <div class="sidebar-divider"></div>
         </nav>
     </aside>

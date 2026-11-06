@@ -6,16 +6,6 @@
 
 <div class="page-header">
 
-   
-
-    <h1 class="page-title">
-        Edit Wilayah
-    </h1>
-
-    <p class="page-description">
-        Perbarui informasi wilayah yang digunakan dalam sistem Posyandu.
-    </p>
-
 </div>
 
 <div class="row">
@@ -179,6 +169,7 @@
                                 value="1"
                                 id="aktif"
                                 class="form-check-input"
+                                style="background-color: #174a43; border-color: #174a43;"
                                 {{ old('aktif', $wilayah->aktif) ? 'checked' : '' }}
                             >
 

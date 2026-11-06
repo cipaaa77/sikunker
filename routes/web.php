@@ -29,6 +29,10 @@ Route::get('/jadwal-publik', [
     'jadwal',
 ])->name('public.jadwal');
 
+Route::get(
+    '/jadwal-publik/{jadwal}/pdf',
+    [JadwalPublikController::class, 'downloadPdf']
+)->name('public.jadwal.pdf');
 
 
 

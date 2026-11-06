@@ -521,7 +521,150 @@
     }
 
     .landing-more a:hover { background: var(--jade-950); color: #fff; }
+.pdf-catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
 
+.pdf-catalog-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 22px;
+    background: #ffffff;
+    border: 1px solid #e4ece8;
+    border-radius: 16px;
+    transition: all .25s ease;
+}
+
+.pdf-catalog-card:hover {
+    transform: translateY(-4px);
+    border-color: #347967;
+    box-shadow: 0 12px 28px rgba(18, 55, 47, .09);
+}
+
+.pdf-catalog-icon {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff0f0;
+    color: #d9534f;
+    border-radius: 13px;
+    font-size: 23px;
+}
+
+.pdf-catalog-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.pdf-catalog-content h3 {
+    margin: 0 0 5px;
+    color: #173f35;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.pdf-catalog-content p {
+    margin: 0 0 13px;
+    color: #7a8983;
+    font-size: 12px;
+}
+
+.pdf-catalog-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.pdf-catalog-info span {
+    color: #60736b;
+    font-size: 11px;
+}
+
+.pdf-catalog-info i {
+    color: #347967;
+    margin-right: 4px;
+}
+
+.pdf-catalog-download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 14px;
+    background: #1f5c4d;
+    color: #ffffff !important;
+    border-radius: 8px;
+    text-decoration: none !important;
+    font-size: 12px;
+    font-weight: 700;
+    transition: .2s ease;
+}
+
+.pdf-catalog-download:hover {
+    background: #12372f;
+    color: #ffffff !important;
+}
+
+.catalog-year {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    background: #eaf3ef;
+    color: #1f5c4d;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.pdf-catalog-empty {
+    padding: 42px 20px;
+    text-align: center;
+    background: #ffffff;
+    border: 1px dashed #cbd9d2;
+    border-radius: 16px;
+}
+
+.pdf-catalog-empty-icon {
+    margin-bottom: 14px;
+    color: #8da69a;
+    font-size: 34px;
+}
+
+.pdf-catalog-empty h3 {
+    color: #173f35;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.pdf-catalog-empty p {
+    margin: 0;
+    color: #7a8983;
+    font-size: 13px;
+}
+
+@media (max-width: 991px) {
+    .pdf-catalog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575px) {
+    .pdf-catalog-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pdf-catalog-card {
+        padding: 17px;
+    }
+}
     /* ---------- HP ---------- */
     @media (max-width: 767.98px) {
         .landing-container { padding-right: 16px; padding-left: 16px; }
@@ -894,7 +1037,91 @@
 
            
         </section>
+    <section class="landing-section" id="katalog-pdf">
 
+        <div class="landing-section-heading">
+
+            <div>
+              <h2 class="landing-title">Unduh Dokumen Jadwal Posyandu</h2>
+
+            
+
+            <div class="catalog-year">
+                <i class="fas fa-calendar-alt"></i>
+                {{ $tahunKatalog }}
+            </div>
+
+        </div>
+
+
+        @if($katalogJadwals->isNotEmpty())
+
+            <div class="pdf-catalog-grid">
+
+                @foreach($katalogJadwals as $jadwalPdf)
+
+                    <div class="pdf-catalog-card">
+
+                        <div class="pdf-catalog-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+
+                        <div class="pdf-catalog-content">
+
+                            <h3>
+                                {{ $namaBulan[(int) $jadwalPdf->bulan] }}
+                            </h3>
+
+                            <p>
+                                Jadwal Posyandu {{ $tahunKatalog }}
+                            </p>
+
+                            <div class="pdf-catalog-info">
+
+                                <span>
+                                    <i class="fas fa-list-check"></i>
+                                    {{ $jadwalPdf->details_count }} kegiatan
+                                </span>
+
+                               
+                            </div>
+
+                            <a
+                                href="{{ route('public.jadwal.pdf', $jadwalPdf->id) }}"
+                                class="pdf-catalog-download"
+                            >
+                                <i class="fas fa-download"></i>
+                                Unduh PDF
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                @endforeach
+
+            </div>
+
+        @else
+
+            <div class="pdf-catalog-empty">
+
+                <div class="pdf-catalog-empty-icon">
+                    <i class="fas fa-file-circle-xmark"></i>
+                </div>
+
+                <h3>Belum Ada Arsip PDF</h3>
+
+                <p>
+                    Belum terdapat jadwal Posyandu yang disetujui
+                    untuk tahun {{ $tahunKatalog }}.
+                </p>
+
+            </div>
+
+        @endif
+
+</section>
         {{-- Informasi --}}
         <section class="landing-section">
             <div class="landing-info">

@@ -129,8 +129,8 @@
         align-items: center;
         justify-content: center;
         border-radius: 9px;
-        background: #fff3cd;
-        color: #946c00;
+        background: #e9ecef;
+        color: #495057;
         flex-shrink: 0;
     }
 
@@ -141,7 +141,7 @@
     }
 
     .jadwal-create-page .status-value {
-        color: #795b00;
+        color: #1c1b1a;
         font-size: 13px;
         font-weight: 700;
     }
@@ -355,29 +355,6 @@
     {{-- Header Halaman --}}
     <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-        <div class="d-flex align-items-center gap-3">
-            <div class="page-icon">
-                <i class="bi bi-calendar-plus"></i>
-            </div>
-
-            <div>
-                <h4 class="page-title">
-                    Tambah Jadwal Bulanan
-                </h4>
-
-                <p class="page-description">
-                    Buat jadwal kegiatan Posyandu sebagai draft.
-                </p>
-            </div>
-        </div>
-
-        <a
-            href="{{ route('jadwal.index') }}"
-            class="btn btn-outline-secondary"
-        >
-            <i class="bi bi-arrow-left me-1"></i>
-            Kembali
-        </a>
     </div>
 
     {{-- Pesan Error Validasi --}}

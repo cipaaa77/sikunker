@@ -6,36 +6,7 @@
 
 <div class="page-header">
 
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-
-            <li class="breadcrumb-item">
-                <a href="{{ route('dashboard') }}">
-                    Dashboard
-                </a>
-            </li>
-
-            <li class="breadcrumb-item">
-                <a href="{{ route('wilayah.index') }}">
-                    Wilayah
-                </a>
-            </li>
-
-            <li class="breadcrumb-item active">
-                Detail
-            </li>
-
-        </ol>
-    </nav>
-
-    <h1 class="page-title">
-        Detail Wilayah
-    </h1>
-
-    <p class="page-description">
-        Informasi lengkap wilayah dan Posyandu yang berada di dalamnya.
-    </p>
-
+    
 </div>
 
 <div class="row">

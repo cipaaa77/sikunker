@@ -52,6 +52,15 @@
         color: #8898aa;
         font-size: 11px;
     }
+    .form-switch .form-check-input:checked {
+        background-color: #174a43 !important;
+        border-color: #174a43 !important;
+    }
+
+    .form-switch .form-check-input:focus {
+        border-color: #174a43;
+        box-shadow: 0 0 0 0.15rem rgba(23, 74, 67, 0.20);
+    }
 </style>
 @endpush
 
@@ -213,7 +222,7 @@
 
                         <button
                             type="submit"
-                            class="btn btn-primary btn-sm"
+                            class="btn btn-jade btn-sm"
                         >
                             <i class="fas fa-save me-1"></i>
                             Simpan Wilayah
